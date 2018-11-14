@@ -1,0 +1,34 @@
+# Exclude all files/directories except the ones I want
+/*
+
+# .gitignore
+!.gitignore
+
+# Readme
+!README.md
+
+# CMakelists
+# !CMakeLists.txt
+
+# params
+!/cfg/
+/cfg/*
+
+# include
+!/include/
+/include/*
+!/include/load_objects.h
+!/include/MyWindow.h
+!/include/sim_config.h
+
+# src
+!/src/
+/src/*
+!/src/load_objects.cpp
+!/src/MyWindow.cpp
+!/src/sim_config.cpp
+
+# exe
+!/exe/
+/exe/*
+!/exe/krang-sim-ach.cpp
