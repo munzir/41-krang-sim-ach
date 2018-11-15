@@ -8,24 +8,25 @@
 !README.md
 
 # CMakelists
-# !CMakeLists.txt
+!CMakeLists.txt
 
 # params
 !/cfg/
 /cfg/*
+!/cfg/params.cfg
 
 # include
 !/include/
 /include/*
 !/include/load_objects.h
-!/include/MyWindow.h
+!/include/window.h
 !/include/sim_config.h
 
 # src
 !/src/
 /src/*
 !/src/load_objects.cpp
-!/src/MyWindow.cpp
+!/src/window.cpp
 !/src/sim_config.cpp
 
 # exe
