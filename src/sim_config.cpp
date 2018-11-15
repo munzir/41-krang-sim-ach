@@ -34,26 +34,26 @@
  */
 
 /**
- * @file balancing_config.cpp
+ * @file sim_config.cpp
  * @author Munzir Zafar
- * @date Oct 29, 2018
+ * @date Nov 14, 2018
  * @brief Reads configuration parameters from a cfg file
  */
 
-#include "balancing_config.h"
+#include "sim_config.h"
 
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
 #include <iostream>
-#include <memory>
 
 #include <config4cpp/Configuration.h>
 #include <Eigen/Eigen>
 
-// Function for reading configuration parameters. First argument is the location of
-// cfg file from the parameters are to be read. Second argument is the output where
-// the parameters are stored
-void ReadConfigParams(const char* config_file, BalancingConfig* params) {
-
+// Function for reading configuration parameters. First argument is the location
+// of cfg file from the parameters are to be read. Second argument is the output
+// where the parameters are stored
+void ReadConfigParams(const char* config_file, SimConfig* params) {
   // Initialize the reader of the cfg file
   config4cpp::Configuration* cfg = config4cpp::Configuration::create();
   const char* scope = "";
@@ -68,87 +68,67 @@ void ReadConfigParams(const char* config_file, BalancingConfig* params) {
     cfg->parse(config_file);
 
     // Read the path to Krang urdf file
-    strcpy(params->urdfpath, cfg->lookupString(scope, "urdfpath"));
+    strcpy(params->krangUrdfPath, cfg->lookupString(scope, "krangUrdfPath"));
+    std::cout << "krangUrdfPath: " << params->krangUrdfPath << std::endl;
 
-    // Read the path to com estimation model parameters
-    strcpy(params->comParametersPath, cfg->lookupString(scope, "comParametersPath"));
+    // Initial heading
+    params->headingInit = cfg->lookupFloat(scope, "headingInit");
+    std::cout << "headingInit: " << params->headingInit << std::endl;
 
-    // Read PD Gains
-    const char* pdGainsStrings[] = {
-      "pdGainsGroundLo", "pdGainsGroundHi",
-      "pdGainsStand", "pdGainsSit",
-      "pdGainsBalLo", "pdGainsBalHi"
-    };
-    Eigen::Matrix<double, 6, 1>* pdGains[] = {
-      &params->pdGainsGroundLo, &params->pdGainsGroundHi,
-      &params->pdGainsStand, &params->pdGainsSit,
-      &params->pdGainsBalLo, &params->pdGainsBalHi
-    };
-    for(int i = 0; i<6; i++) {
-      str = cfg->lookupString(scope, pdGainsStrings[i]);
-      stream.str(str);
-      for(int j = 0; j < 6; j++)
-        stream >> (*(pdGains[i]))(j);
-      stream.clear();
-      std::cout << pdGainsStrings[i] << ": ";
-      std::cout << (*(pdGains[i])).transpose() << std::endl;
-    }
+    // Initial base pitch angle
+    params->qBaseInit = cfg->lookupFloat(scope, "qBaseInit");
+    std::cout << "qBaseInit: " << params->qBaseInit << std::endl;
 
-    // Read Joystick Gains
-    const char* joystickGainsStrings[] = {
-      "joystickGainsGroundLo", "joystickGainsGroundHi",
-      "joystickGainsStand", "joystickGainsSit",
-      "joystickGainsBalLo", "joystickGainsBalHi"
-    };
-    double* joystickGains[] = {
-      params->joystickGainsGroundLo, params->joystickGainsGroundHi,
-      params->joystickGainsStand, params->joystickGainsSit,
-      params->joystickGainsBalLo, params->joystickGainsBalHi
-    };
-    for(int i = 0; i<6; i++) {
-      str = cfg->lookupString(scope, joystickGainsStrings[i]);
-      stream.str(str);
-      for(int j = 0; j < 2; j++)
-        stream >> joystickGains[i][j];
-      stream.clear();
-      std::cout << joystickGainsStrings[i] << ": ";
-      std::cout << joystickGains[i][0] << "  ";
-      std::cout << joystickGains[i][1] << std::endl;
-    }
-
-    // Dynamic LQR?
-    params->dynamicLQR = cfg->lookupBoolean(scope, "dynamicLQR");
-    std::cout << "dynamicLQR: " << (params->dynamicLQR? "true":"false") << std::endl;
-    // Read the Q matrix for LQR
-    params->lqrQ.setZero();
-    str = cfg->lookupString(scope, "lqrQ");
+    // Init base xyz location in the world frame
+    str = cfg->lookupString(scope, "xyzInit");
     stream.str(str);
-    for(int i = 0; i < 4; i++)
-      stream >> params->lqrQ(i, i);
+    for (int i = 0; i < 3; i++) stream >> params->xyzInit(i);
     stream.clear();
-    std::cout << "lqrQ: " << params->lqrQ << std::endl;
+    std::cout << "xyzInit: " << params->xyzInit.transpose() << std::endl;
 
-    // Read the R matrix for LQR
-    params->lqrR.setZero();
-    str = cfg->lookupString(scope, "lqrR");
+    // Initial left wheel angle
+    params->qLWheelInit = cfg->lookupFloat(scope, "qLWheelInit");
+    std::cout << "qLWheelInit: " << params->qLWheelInit << std::endl;
+
+    // Initial right wheel angle
+    params->qRWheelInit = cfg->lookupFloat(scope, "qRWheelInit");
+    std::cout << "qRWheelInit: " << params->qRWheelInit << std::endl;
+
+    // Initial waist angle
+    params->qWaistInit = cfg->lookupFloat(scope, "qWaistInit");
+    std::cout << "qWaistInit: " << params->qWaistInit << std::endl;
+
+    // Initial torso angle
+    params->qTorsoInit = cfg->lookupFloat(scope, "qTorsoInit");
+    std::cout << "qTorsoInit: " << params->qTorsoInit << std::endl;
+
+    // Initial kinect angle
+    params->qKinectInit = cfg->lookupFloat(scope, "qKinectInit");
+    std::cout << "qKinectInit: " << params->qKinectInit << std::endl;
+
+    // Initial configuration of the left arm
+    str = cfg->lookupString(scope, "qLeftArmInit");
     stream.str(str);
-    for(int i = 0; i < 1; i++)
-      stream >> params->lqrR(i, i);
+    for (int i = 0; i < 7; i++) stream >> params->qLeftArmInit(i);
     stream.clear();
-    std::cout << "lqrR: " << params->lqrR << std::endl;
+    std::cout << "qLeftArmInit: " << params->qLeftArmInit.transpose()
+              << std::endl;
 
-    // Read parameters for bal control mode transition
-    params->imuSitAngle = cfg->lookupFloat(scope, "imuSitAngle");
-    std::cout << "imuSitAngle :" << params->imuSitAngle << std::endl;
-    params->toBalThreshold = cfg->lookupFloat(scope, "toBalThreshold");
-    std::cout << "toBalThreshold :" << params->toBalThreshold << std::endl;
+    // Initial configuration of the right arm
+    str = cfg->lookupString(scope, "qRightArmInit");
+    stream.str(str);
+    for (int i = 0; i < 7; i++) stream >> params->qRightArmInit(i);
+    stream.clear();
+    std::cout << "qRightArmInit: " << params->qRightArmInit.transpose()
+              << std::endl;
 
-    // Halt arm to stop
-    params->manualArmLockUnlock = cfg->lookupBoolean(scope, "manualArmLockUnlock");
-    std::cout << "manualArmLockUnlock: ";
-    std::cout << (params->manualArmLockUnlock? "true":"false") << std::endl;
+    // To have initial pose as a balanced pose or not
+    params->initWithBalancePose = cfg->lookupBoolean(scope, "initWithBalancePose");
+    std::cout << "initWithBalancePose: "
+              << (params->initWithBalancePose ? "true" : "false") << std::endl;
+  }
 
-  } catch (const config4cpp::ConfigurationException& ex) {
+  catch (const config4cpp::ConfigurationException& ex) {
     std::cerr << ex.c_str() << std::endl;
     cfg->destroy();
     assert(false && "Problem reading config parameters");

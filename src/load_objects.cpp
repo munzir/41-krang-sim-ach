@@ -1,9 +1,57 @@
+/*
+ * Copyright (c) 2018, Georgia Tech Research Corporation
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *     * Redistributions of source code must retain the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials
+ *       provided with the distribution.
+ *     * Neither the name of the Georgia Tech Research Corporation nor
+ *       the names of its contributors may be used to endorse or
+ *       promote products derived from this software without specific
+ *       prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY GEORGIA TECH RESEARCH CORPORATION ''AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GEORGIA
+ * TECH RESEARCH CORPORATION BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/**
+ * @file load_objects.cpp
+ * @author Munzir Zafar
+ * @date Nov 14, 2018
+ * @brief loads objects into krang simulation
+ */
+
+#include "load_objects.h"
+
 #include <Eigen/Eigen>
 #include <dart/dart.hpp>
+#include <dart/utils/urdf/urdf.hpp>
 #include <memory>
+
+#include "sim_config.h"
+
 //====================================================================
-dart::dynamics::SkeletonPtr createFloor() {
-  using dart::dynamics;
+dart::dynamics::SkeletonPtr CreateFloor() {
+  using namespace dart::dynamics;
 
   SkeletonPtr floor = Skeleton::create("floor");
 
@@ -33,71 +81,28 @@ dart::dynamics::SkeletonPtr createFloor() {
 //====================================================================
 // Calculating the axis angle representation of orientation from headingInit
 // and qBaseInit: RotX(pi/2)*RotY(-pi/2+headingInit)*RotX(-qBaseInit)
-Eigen::AngleAxisd& GetKrangBaseAngleAxis(const double& headingInit,
-                                         const double& qBaseInit) {
+Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& headingInit,
+                                        const double& qBaseInit) {
   Eigen::Transform<double, 3, Eigen::Affine> baseTf;
   baseTf = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
   baseTf.prerotate(Eigen::AngleAxisd(-qBaseInit, Eigen::Vector3d::UnitX()))
       .prerotate(
           Eigen::AngleAxisd(-M_PI / 2 + headingInit, Eigen::Vector3d::UnitY()))
       .prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()));
-  return Eigen::AngleAxisd(baseTf.rotation());
+  auto aa = Eigen::AngleAxisd(baseTf.rotation());
+  return aa;
 }
 
 //====================================================================
-void SetKrangInitPos(const SimConfig& params,
-                     dart::dynamics::SkeletonPtr krang) {
-  Eigen::AngleAxisd aa;
-  aa = GetKrangBaseAngleAxis(params.headingInit, params.qBaseInit);
-  Eigen::Matrix<double, 25, 1> q;
-  q << aa.angle() * aa.axis(), params.xyzInit, params.qLWheelInit,
-      params.qRWheelInit, params.qWaistInit, params.qTorsoInit,
-      params.qKinectInit, params.qLeftArmInit, params.qRightArmInit;
-  krang->setPositions(q);
-}
-
-//====================================================================
-dart::dynamics::SkeletonPtr createKrang(const SimConfig& params) {
+dart::dynamics::SkeletonPtr CreateKrang(SimConfig& params) {
   // Load the Skeleton from a file
   dart::utils::DartLoader loader;
   dart::dynamics::SkeletonPtr krang;
-  krang = loader.parseSkeleton(parse.krangUrdfPath);
+  krang = loader.parseSkeleton(params.krangUrdfPath);
   krang->setName("krang");
 
-  /*ifstream file;
-  char line[1024];
-  file = ifstream(params.default);
-  assert(file.is_open());
-  file.getline(line, 1024);
-  std::istringstream stream;
-  stream = std::istringstream(line);
-  size_t i;
-  i = 0;
-  Eigen::Matrix<double, 24, 1>
-      initPoseParams;  // heading, qBase, x, y, z, qLWheel, qRWheel, qWaist,
-                       // qTorso, qKinect, qLArm0, ... qLArm6, qRArm0, ...,
-                       // qRArm6
-  double newDouble;
-  while ((i < 24) && (stream >> newDouble)) initPoseParams(i++) = newDouble;
-  file.close();
-  double headingInit, qBaseInit, qLWheelInit, qRWheelInit, qWaistInit,
-      qTorsoInit, qKinectInit;
-  Eigen::Vector3d xyzInit;
-  Eigen::Matrix<double, 7, 1> qLeftArmInit;
-  Eigen::Matrix<double, 7, 1> qRightArmInit;
-  headingInit = params.initPose(0);
-  qBaseInit = params.initPose(1);
-  xyzInit << params.initPose.segment(2, 3);
-  qLWheelInit = params.initPose(5);
-  qRWheelInit = params.initPose(6);
-  qWaistInit = params.initPose(7);
-  qTorsoInit = params.initPose(8);
-  qKinectInit = params.initPose(9);
-  qLeftArmInit << params.initPose.segment(10, 7);
-  qRightArmInit << params.initPose.segment(17, 7);*/
-
   // Set the positions
-  SetKrangInitPos(params, krang);
+  SetKrangInitPos<SimConfig>(params, krang);
 
   // If balanced init pose is required
   if (params.initWithBalancePose) {
