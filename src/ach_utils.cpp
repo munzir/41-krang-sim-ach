@@ -34,25 +34,10 @@
  */
 
 /**
- * @file window.h
+ * @file ach_utils.cpp
  * @author Munzir Zafar
- * @date Nov 14, 2018
- * @brief Header for MyWindow.cpp that manages the window rendering the
- * animation of Krang from a cfg file
+ * @date Nov 15, 2018
+ * @brief Uses MotorGroup class to perform ach communication of krang
  */
 
-#ifndef KRANG_SIMULATION_WINDOW_H_
-#define KRANG_SIMULATION_WINDOW_H_
 
-#include <dart/dart.hpp>
-#include <dart/gui/gui.hpp>
-
-class MyWindow : public dart::gui::SimWindow {
- public:
-  MyWindow(const dart::simulation::WorldPtr& world);
-  ~MyWindow() {}
-
-  void timeStepping() override;
-};
-
-#endif // KRANG_SIMULATION_WINDOW_H_

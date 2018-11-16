@@ -34,25 +34,48 @@
  */
 
 /**
- * @file window.h
+ * @file motor.h
  * @author Munzir Zafar
- * @date Nov 14, 2018
- * @brief Header for MyWindow.cpp that manages the window rendering the
- * animation of Krang from a cfg file
+ * @date Nov 15, 2018
+ * @brief Header for motor.cpp that handles ach communication for a specific
+ * motor group
  */
 
-#ifndef KRANG_SIMULATION_WINDOW_H_
-#define KRANG_SIMULATION_WINDOW_H_
+#ifndef KRANG_SIMULATION_MOTOR_H_
+#define KRANG_SIMULATION_MOTOR_H_
 
-#include <dart/dart.hpp>
-#include <dart/gui/gui.hpp>
+#include <vector>
 
-class MyWindow : public dart::gui::SimWindow {
+#include <ach.h>
+#include <somatic.h>
+#include <somatic.pb-c.h>
+
+class MotorGroup {
  public:
-  MyWindow(const dart::simulation::WorldPtr& world);
-  ~MyWindow() {}
+  MotorGroup(const somatic_d_t& daemon, const int n, const char* cmd_chan_name,
+             const char* state_chan_name, const std::vector<int> joint_indices,
+             const std::vector<double>& sign = std::vector<double>());
+  ~MotorGroup();
 
-  void timeStepping() override;
+  void SendState(const std::vector<double>& all_pos,
+                 const std::vector<double>& all_vel,
+                 const std::vector<double>& all_cur);
+
+ private:
+  void InitMessage();
+
+  somatic_d_t* daemon_;
+  size_t n_;  // module count
+  ach_channel_t cmd_chan_;
+  ach_channel_t state_chan_;
+  std::vector<int> joint_indices_;
+  std::vector<double> sign_;
+  Somatic__MotorState state_msg_;
+  struct {
+    Somatic__Vector position_;
+    Somatic__Vector velocity_;
+    Somatic__Vector current_;
+  } state_msg_fields_;
 };
 
-#endif // KRANG_SIMULATION_WINDOW_H_
+#endif  // KRANG_SIMULATION_MOTOR_H_

@@ -49,3 +49,10 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world) {
   // the robot from the world
   setWorld(world);
 }
+
+void MyWindow::timeStepping() {
+
+
+
+  SimWindow::timeStepping();
+}
