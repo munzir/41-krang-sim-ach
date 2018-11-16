@@ -34,25 +34,29 @@
  */
 
 /**
- * @file window.h
+ * @file ach_utils.h
  * @author Munzir Zafar
- * @date Nov 14, 2018
- * @brief Header for MyWindow.cpp that manages the window rendering the
- * animation of Krang from a cfg file
+ * @date Nov 15, 2018
+ * @brief Header for ach_utils.cpp that uses MotorGroup class to perform ach
+ * communication of krang
  */
 
-#ifndef KRANG_SIMULATION_WINDOW_H_
-#define KRANG_SIMULATION_WINDOW_H_
+#ifndef KRANG_SIMULATION_KRANG_ACH_H_
+#define KRANG_SIMULATION_KRANG_ACH_H_
 
-#include <dart/dart.hpp>
-#include <dart/gui/gui.hpp>
 
-class MyWindow : public dart::gui::SimWindow {
+#include <somatic.h>
+
+#include "motor.h"
+
+class KrangAch {
  public:
-  MyWindow(const dart::simulation::WorldPtr& world);
-  ~MyWindow() {}
+  KrangAch();
+  ~KrangAch();
 
-  void timeStepping() override;
+  somatic_d_t daemon;
+  somatic_d_opts_t daemon_opts;
+  MotorGroup wheels, waist, torso, left_arm, right_arm;
 };
 
-#endif // KRANG_SIMULATION_WINDOW_H_
+#endif // KRANG_SIMULATION_KRANG_ACH_H_

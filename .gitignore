@@ -21,6 +21,8 @@
 !/include/load_objects.h
 !/include/window.h
 !/include/sim_config.h
+!/include/ach_utils.h
+!/include/motor.h
 
 # src
 !/src/
@@ -28,8 +30,15 @@
 !/src/load_objects.cpp
 !/src/window.cpp
 !/src/sim_config.cpp
+!/src/ach_utils.cpp
+!/src/motor.cpp
 
 # exe
 !/exe/
 /exe/*
 !/exe/krang-sim-ach.cpp
+
+# bash
+!/bash/
+/bash/*
+/bash/krang-sim-interface
