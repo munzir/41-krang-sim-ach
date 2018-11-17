@@ -123,9 +123,56 @@ void ReadConfigParams(const char* config_file, SimConfig* params) {
               << std::endl;
 
     // To have initial pose as a balanced pose or not
-    params->initWithBalancePose = cfg->lookupBoolean(scope, "initWithBalancePose");
+    params->initWithBalancePose =
+        cfg->lookupBoolean(scope, "initWithBalancePose");
     std::cout << "initWithBalancePose: "
               << (params->initWithBalancePose ? "true" : "false") << std::endl;
+
+    // Somatic daemon identifier
+    strcpy(params->daemonIdentifier,
+           cfg->lookupString(scope, "daemonIdentifier"));
+    std::cout << "daemonIdentifier: " << params->daemonIdentifier << std::endl;
+
+    // Demonize?
+    params->daemonize = cfg->lookupBoolean(scope, "daemonize");
+    std::cout << "daemonize: " << (params->daemonize ? "true" : "false")
+              << std::endl;
+
+    // Channels
+    strcpy(params->wheelsCmdChan, cfg->lookupString(scope, "wheelsCmdChan"));
+    std::cout << "wheelsCmdChan: " << params->wheelsCmdChan << std::endl;
+
+    strcpy(params->wheelsStateChan,
+           cfg->lookupString(scope, "wheelsStateChan"));
+    std::cout << "wheelsStateChan: " << params->wheelsStateChan << std::endl;
+
+    strcpy(params->waistCmdChan, cfg->lookupString(scope, "waistCmdChan"));
+    std::cout << "waistCmdChan: " << params->waistCmdChan << std::endl;
+
+    strcpy(params->waistStateChan, cfg->lookupString(scope, "waistStateChan"));
+    std::cout << "waistStateChan: " << params->waistStateChan << std::endl;
+
+    strcpy(params->torsoCmdChan, cfg->lookupString(scope, "torsoCmdChan"));
+    std::cout << "torsoCmdChan: " << params->torsoCmdChan << std::endl;
+
+    strcpy(params->torsoStateChan, cfg->lookupString(scope, "torsoStateChan"));
+    std::cout << "torsoStateChan: " << params->torsoStateChan << std::endl;
+
+    strcpy(params->leftArmCmdChan, cfg->lookupString(scope, "leftArmCmdChan"));
+    std::cout << "leftArmCmdChan: " << params->leftArmCmdChan << std::endl;
+
+    strcpy(params->leftArmStateChan,
+           cfg->lookupString(scope, "leftArmStateChan"));
+    std::cout << "leftArmStateChan: " << params->leftArmStateChan << std::endl;
+
+    strcpy(params->rightArmCmdChan,
+           cfg->lookupString(scope, "rightArmCmdChan"));
+    std::cout << "rightArmCmdChan: " << params->rightArmCmdChan << std::endl;
+
+    strcpy(params->rightArmStateChan,
+           cfg->lookupString(scope, "rightArmStateChan"));
+    std::cout << "rightArmStateChan: " << params->rightArmStateChan
+              << std::endl;
   }
 
   catch (const config4cpp::ConfigurationException& ex) {

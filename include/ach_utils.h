@@ -54,9 +54,9 @@ class KrangAch {
   KrangAch();
   ~KrangAch();
 
-  somatic_d_t daemon;
-  somatic_d_opts_t daemon_opts;
-  MotorGroup wheels, waist, torso, left_arm, right_arm;
+  somatic_d_t daemon_;
+  somatic_d_opts_t daemon_opts_;
+  MotorGroup wheels_, waist_, torso_, left_arm_, right_arm_;
 };
 
 #endif // KRANG_SIMULATION_KRANG_ACH_H_

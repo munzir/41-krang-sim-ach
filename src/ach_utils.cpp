@@ -40,4 +40,40 @@
  * @brief Uses MotorGroup class to perform ach communication of krang
  */
 
+#include "ach_utils.h"
 
+#include <vector>
+
+#include <somatic.h>
+#include <somatic/daemon.h>
+#include "motor.h"
+
+KrangAch::KrangAch(SimConfig& params) {
+  memset(&daemon_opts_, 0, sizeof(daemon_opts_));
+  daemon_opts_.ident = strdup(params.daemonIdentifier);
+  daemon_opts_.daemonize = params.daemonize;
+  daemon_opts_.sched_rt = SOMATIC_D_SCHED_MOTOR;
+  somatic_verbprintf_prefic = daemon_opts_.ident;
+  somatic_d_init(&daemon_, &daemon_opts_);
+
+  std::vector<int> wheels_joint_indices = {6, 7};
+  wheels_ = MotorGroup(daemon_, params.wheelsCmdChan, params.wheelsStateChan,
+                       wheels_joint_indices);
+
+  std::vector<int> waist_joint_indices = {8, 8};
+  std::vector<double> waist_joint_sign = {1.0, -1.0};
+  waist_ = MotorGroup(daemon_, params.waistCmdChan, params.waistStateChan,
+                      waist_joint_indices, waist_joint_sign);
+
+  std::vector<int> torso_joint_indices = {9};
+  torso_ = MotorGroup(daemon_, params.torsoCmdChan, params.torsoStateChan,
+                      torso_joint_indices);
+
+  std::vector<int> left_arm_joint_indices = {10, 11, 12, 13, 14, 15, 16};
+  left_arm_ = MotorGroup(daemon_, params.leftArmCmdChan,
+                         params.leftArmStateChan, left_arm_joint_indices);
+
+  std::vector<int> right_arm_joint_indices = {17, 18, 19, 20, 21, 22, 23};
+  right_arm_ = MotorGroup(daemon_, params.rightArmCmdChan,
+                          params.rightArmStateChan, right_arm_joint_indices);
+}

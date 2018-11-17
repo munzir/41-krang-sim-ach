@@ -66,6 +66,24 @@ struct SimConfig {
 
   // To have initial pose as a balanced pose or not
   bool initWithBalancePose;
+
+  // Somatic daemon identifier
+  char daemonIdentifier[128];
+
+  // Daemonize?
+  bool daemonize;
+
+  // Channels
+  char wheelsCmdChanv[64];
+  char wheelsStateChan[64];
+  char waistCmdChan[64];
+  char waistStateChan[64];
+  char torsoCmdChan[64];
+  char torsoStateChan[64];
+  char leftArmCmdChan[64];
+  char leftArmStateChan[64];
+  char rightArmCmdChan[64];
+  char rightArmStateChan[64];
 };
 
 // Function for reading configuration parameters. First argument is the location

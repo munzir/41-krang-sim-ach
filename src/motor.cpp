@@ -42,11 +42,11 @@
 
 //============================================================================
 MotorGroup::MotorGroup(
-    const somatic_d_t& daemon, const int n, const char* cmd_chan_name,
+    const somatic_d_t& daemon, const char* cmd_chan_name,
     const char* state_chan_name, const std::vector<int>& joint_indices,
     const std::vector<double>& sign = std::vector<double>()) {
   daemon_ = &daemon;
-  n_ = n;
+  n_ = joint_indices.size();
 
   // Open ach channels for pub/sub
   somatic_d_channel_open(daemon_, &cmd_chan_, cmd_chan_name, NULL);

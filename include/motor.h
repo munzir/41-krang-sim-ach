@@ -52,7 +52,7 @@
 
 class MotorGroup {
  public:
-  MotorGroup(const somatic_d_t& daemon, const int n, const char* cmd_chan_name,
+  MotorGroup(const somatic_d_t& daemon, const char* cmd_chan_name,
              const char* state_chan_name, const std::vector<int> joint_indices,
              const std::vector<double>& sign = std::vector<double>());
   ~MotorGroup();
