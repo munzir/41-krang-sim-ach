@@ -47,12 +47,18 @@
 #include <dart/dart.hpp>
 #include <dart/gui/gui.hpp>
 
+#include "ach_utils.h"
+
 class MyWindow : public dart::gui::SimWindow {
  public:
-  MyWindow(const dart::simulation::WorldPtr& world);
+  MyWindow(const dart::simulation::WorldPtr& world, KrangAch* krang_ach);
   ~MyWindow() {}
 
   void timeStepping() override;
+
+ public:
+  dart::dynamics::SkeletonPtr krang;
+  KrangAch* krang_ach_;
 };
 
-#endif // KRANG_SIMULATION_WINDOW_H_
+#endif  // KRANG_SIMULATION_WINDOW_H_

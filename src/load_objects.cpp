@@ -79,15 +79,15 @@ dart::dynamics::SkeletonPtr CreateFloor() {
 }
 
 //====================================================================
-// Calculating the axis angle representation of orientation from headingInit
-// and qBaseInit: RotX(pi/2)*RotY(-pi/2+headingInit)*RotX(-qBaseInit)
-Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& headingInit,
-                                        const double& qBaseInit) {
+// Calculating the axis angle representation of orientation from heading_init
+// and q_base_init: RotX(pi/2)*RotY(-pi/2+heading_init)*RotX(-q_base_init)
+Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& heading_init,
+                                        const double& q_base_init) {
   Eigen::Transform<double, 3, Eigen::Affine> baseTf;
   baseTf = Eigen::Transform<double, 3, Eigen::Affine>::Identity();
-  baseTf.prerotate(Eigen::AngleAxisd(-qBaseInit, Eigen::Vector3d::UnitX()))
+  baseTf.prerotate(Eigen::AngleAxisd(-q_base_init, Eigen::Vector3d::UnitX()))
       .prerotate(
-          Eigen::AngleAxisd(-M_PI / 2 + headingInit, Eigen::Vector3d::UnitY()))
+          Eigen::AngleAxisd(-M_PI / 2 + heading_init, Eigen::Vector3d::UnitY()))
       .prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitX()));
   auto aa = Eigen::AngleAxisd(baseTf.rotation());
   return aa;
@@ -98,21 +98,21 @@ dart::dynamics::SkeletonPtr CreateKrang(SimConfig& params) {
   // Load the Skeleton from a file
   dart::utils::DartLoader loader;
   dart::dynamics::SkeletonPtr krang;
-  krang = loader.parseSkeleton(params.krangUrdfPath);
+  krang = loader.parseSkeleton(params.krang_urdf_path);
   krang->setName("krang");
 
   // Set the positions
   SetKrangInitPos<SimConfig>(params, krang);
 
   // If balanced init pose is required
-  if (params.initWithBalancePose) {
+  if (params.init_with_balance_pose) {
     Eigen::Vector3d COM;
-    COM = krang->getCOM() - params.xyzInit;
+    COM = krang->getCOM() - params.xyz_init;
     double th = atan2(COM(0), COM(2));
 
-    // Adjust qBaseInit to bring COM on top of wheels and set the positions
+    // Adjust q_base_init to bring COM on top of wheels and set the positions
     // again
-    params.qBaseInit -= th;
+    params.q_base_init -= th;
     SetKrangInitPos(params, krang);
   }
 

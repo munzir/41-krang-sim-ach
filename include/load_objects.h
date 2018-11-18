@@ -44,26 +44,26 @@
 #ifndef KRANG_SIMULATION_LOAD_OBJECTS_H_
 #define KRANG_SIMULATION_LOAD_OBJECTS_H_
 
-#include <dart/dart.hpp>
 #include <Eigen/Eigen>
+#include <dart/dart.hpp>
 
 #include "sim_config.h"
 
 // Given heading and base angle of krang, this function returns the
 // angle axis representation for base frame orientation accepted by
 // DART
-Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& headingInit,
-                                         const double& qBaseInit);
+Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& heading_init,
+                                        const double& q_base_init);
 
 // Given all the initial pose parameters, sets the positions of krang
 template <typename T>
 void SetKrangInitPos(const T& params, dart::dynamics::SkeletonPtr krang) {
   Eigen::AngleAxisd aa;
-  aa = GetKrangBaseAngleAxis(params.headingInit, params.qBaseInit);
+  aa = GetKrangBaseAngleAxis(params.heading_init, params.q_base_init);
   Eigen::Matrix<double, 25, 1> q;
-  q << aa.angle() * aa.axis(), params.xyzInit, params.qLWheelInit,
-      params.qRWheelInit, params.qWaistInit, params.qTorsoInit,
-      params.qKinectInit, params.qLeftArmInit, params.qRightArmInit;
+  q << aa.angle() * aa.axis(), params.xyz_init, params.q_lwheel_init,
+      params.q_rwheel_init, params.q_waist_init, params.q_torso_init,
+      params.q_kinect_init, params.q_left_arm_init, params.q_right_arm_init;
   krang->setPositions(q);
 }
 // Create a floor
@@ -73,4 +73,4 @@ dart::dynamics::SkeletonPtr CreateFloor();
 // Path to krang's urdf is also to be specified in params
 dart::dynamics::SkeletonPtr CreateKrang(SimConfig& params);
 
-#endif // KRANG_SIMULATION_LOAD_OBJECTS_H_
+#endif  // KRANG_SIMULATION_LOAD_OBJECTS_H_
