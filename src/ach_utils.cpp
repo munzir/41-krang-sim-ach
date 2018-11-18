@@ -47,33 +47,61 @@
 #include <somatic.h>
 #include <somatic/daemon.h>
 #include "motor.h"
+#include "sim_config.h"
 
 KrangAch::KrangAch(SimConfig& params) {
+  // Initialize the daemon_
   memset(&daemon_opts_, 0, sizeof(daemon_opts_));
-  daemon_opts_.ident = strdup(params.daemonIdentifier);
+  daemon_opts_.ident = strdup(params.daemon_identifier);
   daemon_opts_.daemonize = params.daemonize;
   daemon_opts_.sched_rt = SOMATIC_D_SCHED_MOTOR;
-  somatic_verbprintf_prefic = daemon_opts_.ident;
+  somatic_verbprintf_prefix = daemon_opts_.ident;
+  memset(&daemon_, 0, sizeof(daemon_));
   somatic_d_init(&daemon_, &daemon_opts_);
 
+  // Establish ach channel communication for all motor groups
+  // TODO: Get indices from joint labels in urdf
   std::vector<int> wheels_joint_indices = {6, 7};
-  wheels_ = MotorGroup(daemon_, params.wheelsCmdChan, params.wheelsStateChan,
-                       wheels_joint_indices);
+  wheels_ = MotorGroup("wheels", &daemon_, params.wheels_cmd_chan,
+                       params.wheels_state_chan, wheels_joint_indices);
 
   std::vector<int> waist_joint_indices = {8, 8};
   std::vector<double> waist_joint_sign = {1.0, -1.0};
-  waist_ = MotorGroup(daemon_, params.waistCmdChan, params.waistStateChan,
-                      waist_joint_indices, waist_joint_sign);
+  waist_ = MotorGroup("waist", &daemon_, params.waist_cmd_chan,
+                      params.waist_state_chan, waist_joint_indices,
+                      waist_joint_sign);
 
   std::vector<int> torso_joint_indices = {9};
-  torso_ = MotorGroup(daemon_, params.torsoCmdChan, params.torsoStateChan,
-                      torso_joint_indices);
+  torso_ = MotorGroup("torso", &daemon_, params.torso_cmd_chan,
+                      params.torso_state_chan, torso_joint_indices);
 
-  std::vector<int> left_arm_joint_indices = {10, 11, 12, 13, 14, 15, 16};
-  left_arm_ = MotorGroup(daemon_, params.leftArmCmdChan,
-                         params.leftArmStateChan, left_arm_joint_indices);
+  std::vector<int> left_arm_joint_indices = {11, 12, 13, 14, 15, 16, 17};
+  left_arm_ = MotorGroup("left-arm", &daemon_, params.left_arm_cmd_chan,
+                         params.left_arm_state_chan, left_arm_joint_indices);
 
-  std::vector<int> right_arm_joint_indices = {17, 18, 19, 20, 21, 22, 23};
-  right_arm_ = MotorGroup(daemon_, params.rightArmCmdChan,
-                          params.rightArmStateChan, right_arm_joint_indices);
+  std::vector<int> right_arm_joint_indices = {18, 19, 20, 21, 22, 23, 24};
+  right_arm_ = MotorGroup("right-arm", &daemon_, params.right_arm_cmd_chan,
+                          params.right_arm_state_chan, right_arm_joint_indices);
+
+  // Send a "running" notice on the event channel
+  somatic_d_event(&daemon_, SOMATIC__EVENT__PRIORITIES__NOTICE,
+                  SOMATIC__EVENT__CODES__PROC_RUNNING, NULL, NULL);
+}
+
+KrangAch::~KrangAch() {
+  // Send a "stopping" notice on the event channel
+  somatic_d_event(&daemon_, SOMATIC__EVENT__PRIORITIES__NOTICE,
+                  SOMATIC__EVENT__CODES__PROC_STOPPING, NULL, NULL);
+
+  // Destroy the daemon
+  somatic_d_destroy(&daemon_);
+}
+void KrangAch::SendState(const Eigen::VectorXd& all_pos,
+                         const Eigen::VectorXd& all_vel,
+                         const Eigen::VectorXd& all_cur) {
+  wheels_.SendState(all_pos, all_vel, all_cur);
+  waist_.SendState(all_pos, all_vel, all_cur);
+  torso_.SendState(all_pos, all_vel, all_cur);
+  left_arm_.SendState(all_pos, all_vel, all_cur);
+  right_arm_.SendState(all_pos, all_vel, all_cur);
 }

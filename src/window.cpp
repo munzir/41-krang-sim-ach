@@ -44,15 +44,21 @@
 #include <dart/dart.hpp>
 #include <dart/gui/gui.hpp>
 
-MyWindow::MyWindow(const dart::simulation::WorldPtr& world) {
-  // Attach the world passed in the input argument to the window, and fetch
-  // the robot from the world
+MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
+                   KrangAch* krang_ach)
+    : krang_ach_(krang_ach) {
+  // Attach the world passed in the input argument to the window
   setWorld(world);
+
+  // fetch the robot from the world
+  krang = world->getSkeleton("krang");
 }
 
 void MyWindow::timeStepping() {
+  // Send state on ach channel
+  krang_ach_->SendState(krang->getPositions(), krang->getVelocities(),
+                        krang->getForces());
 
-
-
+  // Run the world
   SimWindow::timeStepping();
 }

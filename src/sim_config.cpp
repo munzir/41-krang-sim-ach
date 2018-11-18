@@ -68,70 +68,73 @@ void ReadConfigParams(const char* config_file, SimConfig* params) {
     cfg->parse(config_file);
 
     // Read the path to Krang urdf file
-    strcpy(params->krangUrdfPath, cfg->lookupString(scope, "krangUrdfPath"));
-    std::cout << "krangUrdfPath: " << params->krangUrdfPath << std::endl;
+    strcpy(params->krang_urdf_path,
+           cfg->lookupString(scope, "krang_urdf_path"));
+    std::cout << "krang_urdf_path: " << params->krang_urdf_path << std::endl;
 
     // Initial heading
-    params->headingInit = cfg->lookupFloat(scope, "headingInit");
-    std::cout << "headingInit: " << params->headingInit << std::endl;
+    params->heading_init = cfg->lookupFloat(scope, "heading_init");
+    std::cout << "heading_init: " << params->heading_init << std::endl;
 
     // Initial base pitch angle
-    params->qBaseInit = cfg->lookupFloat(scope, "qBaseInit");
-    std::cout << "qBaseInit: " << params->qBaseInit << std::endl;
+    params->q_base_init = cfg->lookupFloat(scope, "q_base_init");
+    std::cout << "q_base_init: " << params->q_base_init << std::endl;
 
     // Init base xyz location in the world frame
-    str = cfg->lookupString(scope, "xyzInit");
+    str = cfg->lookupString(scope, "xyz_init");
     stream.str(str);
-    for (int i = 0; i < 3; i++) stream >> params->xyzInit(i);
+    for (int i = 0; i < 3; i++) stream >> params->xyz_init(i);
     stream.clear();
-    std::cout << "xyzInit: " << params->xyzInit.transpose() << std::endl;
+    std::cout << "xyz_init: " << params->xyz_init.transpose() << std::endl;
 
     // Initial left wheel angle
-    params->qLWheelInit = cfg->lookupFloat(scope, "qLWheelInit");
-    std::cout << "qLWheelInit: " << params->qLWheelInit << std::endl;
+    params->q_lwheel_init = cfg->lookupFloat(scope, "q_lwheel_init");
+    std::cout << "q_lwheel_init: " << params->q_lwheel_init << std::endl;
 
     // Initial right wheel angle
-    params->qRWheelInit = cfg->lookupFloat(scope, "qRWheelInit");
-    std::cout << "qRWheelInit: " << params->qRWheelInit << std::endl;
+    params->q_rwheel_init = cfg->lookupFloat(scope, "q_rwheel_init");
+    std::cout << "q_rwheel_init: " << params->q_rwheel_init << std::endl;
 
     // Initial waist angle
-    params->qWaistInit = cfg->lookupFloat(scope, "qWaistInit");
-    std::cout << "qWaistInit: " << params->qWaistInit << std::endl;
+    params->q_waist_init = cfg->lookupFloat(scope, "q_waist_init");
+    std::cout << "q_waist_init: " << params->q_waist_init << std::endl;
 
     // Initial torso angle
-    params->qTorsoInit = cfg->lookupFloat(scope, "qTorsoInit");
-    std::cout << "qTorsoInit: " << params->qTorsoInit << std::endl;
+    params->q_torso_init = cfg->lookupFloat(scope, "q_torso_init");
+    std::cout << "q_torso_init: " << params->q_torso_init << std::endl;
 
     // Initial kinect angle
-    params->qKinectInit = cfg->lookupFloat(scope, "qKinectInit");
-    std::cout << "qKinectInit: " << params->qKinectInit << std::endl;
+    params->q_kinect_init = cfg->lookupFloat(scope, "q_kinect_init");
+    std::cout << "q_kinect_init: " << params->q_kinect_init << std::endl;
 
     // Initial configuration of the left arm
-    str = cfg->lookupString(scope, "qLeftArmInit");
+    str = cfg->lookupString(scope, "q_left_arm_init");
     stream.str(str);
-    for (int i = 0; i < 7; i++) stream >> params->qLeftArmInit(i);
+    for (int i = 0; i < 7; i++) stream >> params->q_left_arm_init(i);
     stream.clear();
-    std::cout << "qLeftArmInit: " << params->qLeftArmInit.transpose()
+    std::cout << "q_left_arm_init: " << params->q_left_arm_init.transpose()
               << std::endl;
 
     // Initial configuration of the right arm
-    str = cfg->lookupString(scope, "qRightArmInit");
+    str = cfg->lookupString(scope, "q_right_arm_init");
     stream.str(str);
-    for (int i = 0; i < 7; i++) stream >> params->qRightArmInit(i);
+    for (int i = 0; i < 7; i++) stream >> params->q_right_arm_init(i);
     stream.clear();
-    std::cout << "qRightArmInit: " << params->qRightArmInit.transpose()
+    std::cout << "q_right_arm_init: " << params->q_right_arm_init.transpose()
               << std::endl;
 
     // To have initial pose as a balanced pose or not
-    params->initWithBalancePose =
-        cfg->lookupBoolean(scope, "initWithBalancePose");
-    std::cout << "initWithBalancePose: "
-              << (params->initWithBalancePose ? "true" : "false") << std::endl;
+    params->init_with_balance_pose =
+        cfg->lookupBoolean(scope, "init_with_balance_pose");
+    std::cout << "init_with_balance_pose: "
+              << (params->init_with_balance_pose ? "true" : "false")
+              << std::endl;
 
     // Somatic daemon identifier
-    strcpy(params->daemonIdentifier,
-           cfg->lookupString(scope, "daemonIdentifier"));
-    std::cout << "daemonIdentifier: " << params->daemonIdentifier << std::endl;
+    strcpy(params->daemon_identifier,
+           cfg->lookupString(scope, "daemon_identifier"));
+    std::cout << "daemon_identifier: " << params->daemon_identifier
+              << std::endl;
 
     // Demonize?
     params->daemonize = cfg->lookupBoolean(scope, "daemonize");
@@ -139,39 +142,46 @@ void ReadConfigParams(const char* config_file, SimConfig* params) {
               << std::endl;
 
     // Channels
-    strcpy(params->wheelsCmdChan, cfg->lookupString(scope, "wheelsCmdChan"));
-    std::cout << "wheelsCmdChan: " << params->wheelsCmdChan << std::endl;
+    strcpy(params->wheels_cmd_chan,
+           cfg->lookupString(scope, "wheels_cmd_chan"));
+    std::cout << "wheels_cmd_chan: " << params->wheels_cmd_chan << std::endl;
 
-    strcpy(params->wheelsStateChan,
-           cfg->lookupString(scope, "wheelsStateChan"));
-    std::cout << "wheelsStateChan: " << params->wheelsStateChan << std::endl;
+    strcpy(params->wheels_state_chan,
+           cfg->lookupString(scope, "wheels_state_chan"));
+    std::cout << "wheels_state_chan: " << params->wheels_state_chan
+              << std::endl;
 
-    strcpy(params->waistCmdChan, cfg->lookupString(scope, "waistCmdChan"));
-    std::cout << "waistCmdChan: " << params->waistCmdChan << std::endl;
+    strcpy(params->waist_cmd_chan, cfg->lookupString(scope, "waist_cmd_chan"));
+    std::cout << "waist_cmd_chan: " << params->waist_cmd_chan << std::endl;
 
-    strcpy(params->waistStateChan, cfg->lookupString(scope, "waistStateChan"));
-    std::cout << "waistStateChan: " << params->waistStateChan << std::endl;
+    strcpy(params->waist_state_chan,
+           cfg->lookupString(scope, "waist_state_chan"));
+    std::cout << "waist_state_chan: " << params->waist_state_chan << std::endl;
 
-    strcpy(params->torsoCmdChan, cfg->lookupString(scope, "torsoCmdChan"));
-    std::cout << "torsoCmdChan: " << params->torsoCmdChan << std::endl;
+    strcpy(params->torso_cmd_chan, cfg->lookupString(scope, "torso_cmd_chan"));
+    std::cout << "torso_cmd_chan: " << params->torso_cmd_chan << std::endl;
 
-    strcpy(params->torsoStateChan, cfg->lookupString(scope, "torsoStateChan"));
-    std::cout << "torsoStateChan: " << params->torsoStateChan << std::endl;
+    strcpy(params->torso_state_chan,
+           cfg->lookupString(scope, "torso_state_chan"));
+    std::cout << "torso_state_chan: " << params->torso_state_chan << std::endl;
 
-    strcpy(params->leftArmCmdChan, cfg->lookupString(scope, "leftArmCmdChan"));
-    std::cout << "leftArmCmdChan: " << params->leftArmCmdChan << std::endl;
+    strcpy(params->left_arm_cmd_chan,
+           cfg->lookupString(scope, "left_arm_cmd_chan"));
+    std::cout << "left_arm_cmd_chan: " << params->left_arm_cmd_chan << std::endl;
 
-    strcpy(params->leftArmStateChan,
-           cfg->lookupString(scope, "leftArmStateChan"));
-    std::cout << "leftArmStateChan: " << params->leftArmStateChan << std::endl;
+    strcpy(params->left_arm_state_chan,
+           cfg->lookupString(scope, "left_arm_state_chan"));
+    std::cout << "left_arm_state_chan: " << params->left_arm_state_chan
+              << std::endl;
 
-    strcpy(params->rightArmCmdChan,
-           cfg->lookupString(scope, "rightArmCmdChan"));
-    std::cout << "rightArmCmdChan: " << params->rightArmCmdChan << std::endl;
+    strcpy(params->right_arm_cmd_chan,
+           cfg->lookupString(scope, "right_arm_cmd_chan"));
+    std::cout << "right_arm_cmd_chan: " << params->right_arm_cmd_chan
+              << std::endl;
 
-    strcpy(params->rightArmStateChan,
-           cfg->lookupString(scope, "rightArmStateChan"));
-    std::cout << "rightArmStateChan: " << params->rightArmStateChan
+    strcpy(params->right_arm_state_chan,
+           cfg->lookupString(scope, "right_arm_state_chan"));
+    std::cout << "right_arm_state_chan: " << params->right_arm_state_chan
               << std::endl;
   }
 

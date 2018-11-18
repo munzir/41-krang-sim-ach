@@ -50,40 +50,40 @@
 // the program
 struct SimConfig {
   // Path to URDF file
-  char krangUrdfPath[1024];
+  char krang_urdf_path[1024];
 
   // Initial pose parameters
-  double headingInit;
-  double qBaseInit;
-  Eigen::Vector3d xyzInit;
-  double qLWheelInit;
-  double qRWheelInit;
-  double qWaistInit;
-  double qTorsoInit;
-  double qKinectInit;
-  Eigen::Matrix<double, 7, 1> qLeftArmInit;
-  Eigen::Matrix<double, 7, 1> qRightArmInit;
+  double heading_init;
+  double q_base_init;
+  Eigen::Vector3d xyz_init;
+  double q_lwheel_init;
+  double q_rwheel_init;
+  double q_waist_init;
+  double q_torso_init;
+  double q_kinect_init;
+  Eigen::Matrix<double, 7, 1> q_left_arm_init;
+  Eigen::Matrix<double, 7, 1> q_right_arm_init;
 
   // To have initial pose as a balanced pose or not
-  bool initWithBalancePose;
+  bool init_with_balance_pose;
 
   // Somatic daemon identifier
-  char daemonIdentifier[128];
+  char daemon_identifier[128];
 
   // Daemonize?
   bool daemonize;
 
   // Channels
-  char wheelsCmdChanv[64];
-  char wheelsStateChan[64];
-  char waistCmdChan[64];
-  char waistStateChan[64];
-  char torsoCmdChan[64];
-  char torsoStateChan[64];
-  char leftArmCmdChan[64];
-  char leftArmStateChan[64];
-  char rightArmCmdChan[64];
-  char rightArmStateChan[64];
+  char wheels_cmd_chan[64];
+  char wheels_state_chan[64];
+  char waist_cmd_chan[64];
+  char waist_state_chan[64];
+  char torso_cmd_chan[64];
+  char torso_state_chan[64];
+  char left_arm_cmd_chan[64];
+  char left_arm_state_chan[64];
+  char right_arm_cmd_chan[64];
+  char right_arm_state_chan[64];
 };
 
 // Function for reading configuration parameters. First argument is the location

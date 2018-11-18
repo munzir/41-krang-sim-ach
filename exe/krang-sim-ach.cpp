@@ -63,8 +63,11 @@ int main(int argc, char* argv[]) {
   dart::dynamics::SkeletonPtr robot = CreateKrang(params);
   world->addSkeleton(robot);
 
+  // Ach communication machinery
+  KrangAch krang_ach(params);
+
   // Create window
-  MyWindow window(world);
+  MyWindow window(world, &krang_ach);
 
   // Run the world
   glutInit(&argc, argv);

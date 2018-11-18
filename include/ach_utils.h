@@ -48,11 +48,16 @@
 #include <somatic.h>
 
 #include "motor.h"
+#include "sim_config.h"
 
 class KrangAch {
  public:
-  KrangAch();
+  KrangAch(SimConfig& params);
   ~KrangAch();
+
+  void SendState(const Eigen::VectorXd& all_pos,
+                 const Eigen::VectorXd& all_vel,
+                 const Eigen::VectorXd& all_cur);
 
   somatic_d_t daemon_;
   somatic_d_opts_t daemon_opts_;
