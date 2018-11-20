@@ -40,12 +40,27 @@
  * @brief Executable that runs krang simulation and allows other programs
  * to interact with the simulation via ach channels
  */
+#include <stdlib.h>
+
 #include "load_objects.h"
 #include "sim_config.h"
 #include "window.h"
 
 #include <dart/dart.hpp>
 
+//=============================================================================
+// This function is written because glutMainLoop() does not ever return.
+// Instead it calls exit(0). The cleaning that could be elegantly done in
+// KrangAch destructor has now to be done explicitly, because no destructor
+// will be executed upon exit. By making use of atexit(ExitFunction), we will
+// force the execution of ExitFunction() upon exit. Since this function is not
+// allowed to accept any arguments, we are defining KrangAch pointer as a
+// global variable to allow this function to access the KrangAch object that is
+// to be destroyed.
+KrangAch* krang_ach;
+void ExitFunction() { krang_ach->Destroy(); }
+
+//=============================================================================
 int main(int argc, char* argv[]) {
   // Read parameters from the cfg file
   SimConfig params;
@@ -64,14 +79,25 @@ int main(int argc, char* argv[]) {
   world->addSkeleton(robot);
 
   // Ach communication machinery
-  KrangAch krang_ach(params);
+  krang_ach = new KrangAch(params);
 
-  // Create window
-  MyWindow window(world, &krang_ach);
+  // The window object that has all the callback functions defined which are
+  // executed during simulation. It therefore needs access to all other objects
+  // in the program. Hence, it is being provided with them all at construction
+  MyWindow window(world, krang_ach);
 
-  // Run the world
+  // Define exit function
+  atexit(ExitFunction);
+
+  // Glut init
   glutInit(&argc, argv);
+
+  // Launch the window. Specify glut callback functions as methods of the window
+  // object
   window.initWindow(1280, 720, "Krang Simulation with Ach");
+
+  // Process events of the window rendering our simulation. This thread never
+  // returns. Calls exit(0) when the window is closed.
   glutMainLoop();
 
   return 0;

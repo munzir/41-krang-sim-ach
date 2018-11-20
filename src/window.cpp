@@ -43,9 +43,9 @@
 
 #include <dart/dart.hpp>
 #include <dart/gui/gui.hpp>
+#include "load_objects.h"
 
-MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
-                   KrangAch* krang_ach)
+MyWindow::MyWindow(const dart::simulation::WorldPtr& world, KrangAch* krang_ach)
     : krang_ach_(krang_ach) {
   // Attach the world passed in the input argument to the window
   setWorld(world);
@@ -57,7 +57,7 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
 void MyWindow::timeStepping() {
   // Send state on ach channel
   krang_ach_->SendState(krang->getPositions(), krang->getVelocities(),
-                        krang->getForces());
+                        krang->getForces(), GetBaseImuData(krang));
 
   // Run the world
   SimWindow::timeStepping();

@@ -49,19 +49,6 @@
 #include <ach.h>
 
 //============================================================================
-MotorGroup::MotorGroup() {
-  name_[0] = 0;
-  daemon_ = NULL;
-  n_ = 0;
-  memset(&cmd_chan_, 0, sizeof(cmd_chan_));
-  memset(&state_chan_, 0, sizeof(state_chan_));
-  joint_indices_ = std::vector<int>();
-  sign_ = std::vector<double>();
-  memset(&state_msg_, 0, sizeof(state_msg_));
-  memset(&state_msg_fields_, 0, sizeof(state_msg_fields_));
-}
-
-//============================================================================
 MotorGroup::MotorGroup(const char* name, somatic_d_t* daemon,
                        const char* cmd_chan_name, const char* state_chan_name,
                        const std::vector<int>& joint_indices,
@@ -116,11 +103,10 @@ void MotorGroup::InitMessage() {
 //========================================================================
 //// Destructor
 MotorGroup::~MotorGroup() {
-  if (daemon_ != NULL) {
-    ach_close(&cmd_chan_);
-    ach_close(&state_chan_);
-    somatic_metadata_free(state_msg_.meta);
-  }
+  std::cout << "destroy " << name_ << std::endl;
+  ach_close(&cmd_chan_);
+  ach_close(&state_chan_);
+  somatic_metadata_free(state_msg_.meta);
 }
 //========================================================================
 //// Send state on ach channel

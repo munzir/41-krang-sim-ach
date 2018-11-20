@@ -84,6 +84,7 @@ struct SimConfig {
   char left_arm_state_chan[64];
   char right_arm_cmd_chan[64];
   char right_arm_state_chan[64];
+  char imu_chan[64];
 };
 
 // Function for reading configuration parameters. First argument is the location

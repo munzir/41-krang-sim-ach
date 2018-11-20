@@ -122,3 +122,52 @@ dart::dynamics::SkeletonPtr CreateKrang(SimConfig& params) {
 
   return krang;
 }
+//====================================================================
+Eigen::Matrix<double, 6, 1> GetBaseImuData(dart::dynamics::SkeletonPtr krang) {
+  // We define a frame of reference "imu". Origin on the center of the physical
+  // imu, x, y and z axes along the -y, +z and -x axes of the physical imu
+  // (labeled). Henceforth x_imu, y_imu and z_imu refer to the axes of frame
+  // "imu"
+
+  // The angle that x_imu makes wrt the -z-axis of the base frame
+  static const double mount_angle = -.7853981634;
+
+  // Axes of "imu" frame represented in the base frame
+  Eigen::Vector3d x_imu_wrt_base, y_imu_wrt_base, z_imu_wrt_base;
+  x_imu_wrt_base << sin(mount_angle), 0, -cos(mount_angle);
+  y_imu_wrt_base << cos(mount_angle), 0, sin(mount_angle);
+  z_imu_wrt_base << 0, -1, 0;
+
+  // Rotation matrix of "imu" frame wrt base frame
+  Eigen::Matrix3d rot_imu_wrt_base;
+  rot_imu_wrt_base << x_imu_wrt_base, y_imu_wrt_base, z_imu_wrt_base;
+
+  // Rotation of base frame wrt to the world
+  Eigen::Matrix3d rot_base_wrt_world;
+  rot_base_wrt_world = krang->getBodyNode("Base")->getTransform().rotation();
+
+  // Gravity vector (-z-axis of the world frame) represented in base frame
+  Eigen::Vector3d gravity_direction_wrt_base;
+  gravity_direction_wrt_base = -rot_base_wrt_world.transpose().col(2);
+
+
+  // Gravity vector represented in the "imu" frame
+  Eigen::Vector3d gravity_direction_wrt_imu;
+  gravity_direction_wrt_imu =
+      rot_imu_wrt_base.transpose() * gravity_direction_wrt_base;
+
+  // Angular velocity of the base frame represented in the world
+  Eigen::Vector3d base_ang_vel_wrt_world;
+  base_ang_vel_wrt_world = krang->getBodyNode("Base")->getAngularVelocity();
+
+  // Angular velocity of the base frame in the "imu" frame
+  Eigen::Vector3d base_ang_vel_wrt_imu;
+  base_ang_vel_wrt_imu = rot_imu_wrt_base.transpose() *
+                         rot_base_wrt_world.transpose() *
+                         base_ang_vel_wrt_world;
+
+  // Return vector
+  Eigen::Matrix<double, 6, 1> imu_data;
+  imu_data << gravity_direction_wrt_imu, base_ang_vel_wrt_imu;
+  return imu_data;
+}
