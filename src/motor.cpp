@@ -132,10 +132,67 @@ void MotorGroup::SendState(const Eigen::VectorXd& all_pos,
   ach_status_t r =
       SOMATIC_PACK_SEND(&state_chan_, somatic__motor_state, &state_msg_);
 
-  /// check message transmission
+  /// Check message transmission
   somatic_d_check(daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
                   SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT, ACH_OK == r,
                   "SendState", "motor group: %s, ach result: %s", name_,
                   ach_result_to_string(r));
 }
+//========================================================================
+//// Receive command from ach channel
+Somati__MotorCmd* MotorGroup::RecieveCommand() {
+  // The absolute time when receive should give up waiting
+  struct timespec currTime;
+  clock_gettime(CLOCK_MONOTONIC, &currTime);
+  struct timespec abstime = aa_tm_add(cx->wait_time, currTime);
 
+  /// Read current state from state channel
+  ach_status_t r;
+  Somatic__MotorCmd* cmd =
+      SOMATIC_D_GET(&r, somatic__motor_cmd, daemon_, &cmd_chan_, &abstime,
+                    ACH_O_WAIT | ACH_O_LAST);
+
+  // Check message reception
+  somatic_d_check(
+      daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
+      SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
+      ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) || ACH_TIMEOUT == r,
+      "ReceiveCommand", "motor group: %s, ach result: %s", name_,
+      ach_result_to_string(r));
+
+  // If the message has timed out, request an update
+  if (r == ACH_TIMEOUT) return NULL;
+
+  // Validate the message
+  else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) {
+    // Check if the message has one of the expected parameters
+    int goodParam =
+        cmd->has_param && (SOMATIC__MOTOR_PARAM__MOTOR_POSITION == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_VELOCITY == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_CURRENT == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_HALT == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_RESET == cmd->param);
+
+    // Check if the command has the right number of parameters if pos, vel or
+    // current
+    int goodValues = ((cmd->values && cmd->values->n_data == cx->n) ||
+                      SOMATIC__MOTOR_PARAM__MOTOR_HALT == cmd->param ||
+                      SOMATIC__MOTOR_PARAM__MOTOR_RESET == cmd->param);
+
+    // Use somatic interface to combine the finalize the checks in case there is
+    // an error
+    int somGoodParam = somatic_d_check_msg(
+        daemon_, goodParam, "motor_cmd", "invalid motor param, set: %d, val: %d",
+        cmd->has_param, cmd->param);
+    int somGoodValues = somatic_d_check_msg(daemon_, goodValues, "motor_cmd",
+                                            "wrong motor count: %d, wanted %d",
+                                            cmd->values->n_data, n_);
+
+    // If both good parameter and values, execute the command; otherwise just
+    // update the state
+    if (somGoodParam && somGoodValues)
+      return cmd;
+    else
+      return NULL;
+  }
+}
