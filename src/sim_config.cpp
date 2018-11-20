@@ -167,7 +167,8 @@ void ReadConfigParams(const char* config_file, SimConfig* params) {
 
     strcpy(params->left_arm_cmd_chan,
            cfg->lookupString(scope, "left_arm_cmd_chan"));
-    std::cout << "left_arm_cmd_chan: " << params->left_arm_cmd_chan << std::endl;
+    std::cout << "left_arm_cmd_chan: " << params->left_arm_cmd_chan
+              << std::endl;
 
     strcpy(params->left_arm_state_chan,
            cfg->lookupString(scope, "left_arm_state_chan"));
@@ -183,6 +184,9 @@ void ReadConfigParams(const char* config_file, SimConfig* params) {
            cfg->lookupString(scope, "right_arm_state_chan"));
     std::cout << "right_arm_state_chan: " << params->right_arm_state_chan
               << std::endl;
+
+    strcpy(params->imu_chan, cfg->lookupString(scope, "imu_chan"));
+    std::cout << "imu_chan: " << params->imu_chan << std::endl;
   }
 
   catch (const config4cpp::ConfigurationException& ex) {

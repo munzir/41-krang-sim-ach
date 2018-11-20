@@ -44,6 +44,7 @@
 #ifndef KRANG_SIMULATION_KRANG_ACH_H_
 #define KRANG_SIMULATION_KRANG_ACH_H_
 
+#include <memory>
 
 #include <somatic.h>
 
@@ -53,15 +54,29 @@
 class KrangAch {
  public:
   KrangAch(SimConfig& params);
-  ~KrangAch();
+  ~KrangAch(){};
 
-  void SendState(const Eigen::VectorXd& all_pos,
-                 const Eigen::VectorXd& all_vel,
-                 const Eigen::VectorXd& all_cur);
+  // Since special cleaning up is needed and glutMainLoop exits abruptly by
+  // calling exit(0) that does not call destructors, the cleaning that could
+  // elegantly be done in the destructor has to be explicitly performed now in a
+  // separate Destroy() function that the user needs to call in an ExitFunction
+  // that can be specified to be executed via atexit(ExitFunction)
+  void Destroy();
 
+  void SendState(const Eigen::VectorXd& all_pos, const Eigen::VectorXd& all_vel,
+                 const Eigen::VectorXd& all_cur,
+                 const Eigen::Matrix<double, 6, 1>& imu_data);
+
+  // For somatic daemon management
   somatic_d_t daemon_;
   somatic_d_opts_t daemon_opts_;
-  MotorGroup wheels_, waist_, torso_, left_arm_, right_arm_;
+
+  // MotorGroups for ach communication
+  MotorGroup *wheels_, *waist_, *torso_, *left_arm_, *right_arm_;
+
+  // Imu data ach communication
+  ach_channel_t imu_chan_;
+  Somatic__Vector* imu_msg_;
 };
 
-#endif // KRANG_SIMULATION_KRANG_ACH_H_
+#endif  // KRANG_SIMULATION_KRANG_ACH_H_

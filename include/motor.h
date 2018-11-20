@@ -55,34 +55,6 @@
 
 class MotorGroup {
  public:
-  MotorGroup();
-  MotorGroup& operator=(MotorGroup&& other) {
-    if (this != &other) {
-      strcpy(name_, other.name_);
-      daemon_ = other.daemon_;
-      n_ = other.n_;
-      cmd_chan_ = other.cmd_chan_;
-      state_chan_ = other.state_chan_;
-      joint_indices_ = other.joint_indices_;
-      sign_ = other.sign_;
-      state_msg_ = other.state_msg_;
-      state_msg_.position = &state_msg_fields_.position_;
-      state_msg_.velocity = &state_msg_fields_.velocity_;
-      state_msg_.current = &state_msg_fields_.current_;
-      state_msg_fields_ = other.state_msg_fields_;
-
-      other.name_[0] = 0;
-      other.daemon_ = NULL;
-      other.n_ = 0;
-      memset(&other.cmd_chan_, 0, sizeof(other.cmd_chan_));
-      memset(&other.state_chan_, 0, sizeof(other.state_chan_));
-      other.joint_indices_ = std::vector<int>();
-      other.sign_ = std::vector<double>();
-      memset(&other.state_msg_, 0, sizeof(state_msg_));
-      memset(&other.state_msg_fields_, 0, sizeof(state_msg_fields_));
-    }
-    return *this;
-  }
   MotorGroup(const char* name, somatic_d_t* daemon, const char* cmd_chan_name,
              const char* state_chan_name, const std::vector<int>& joint_indices,
              const std::vector<double>& sign = std::vector<double>());

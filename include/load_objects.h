@@ -73,4 +73,11 @@ dart::dynamics::SkeletonPtr CreateFloor();
 // Path to krang's urdf is also to be specified in params
 dart::dynamics::SkeletonPtr CreateKrang(SimConfig& params);
 
+// Construct quantities for imu
+// Returns a six-element Eigen vector:
+// First three elements represents gravity vector direction's projection on -Y, +Z
+// and -X axes labeled on the physical imu on the robot
+// Last three elements base link's angular velocity's components
+// along -Y, +Z and -X axes labeled on the physical imu
+Eigen::Matrix<double, 6, 1> GetBaseImuData(dart::dynamics::SkeletonPtr krang);
 #endif  // KRANG_SIMULATION_LOAD_OBJECTS_H_
