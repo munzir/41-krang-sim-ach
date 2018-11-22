@@ -63,6 +63,10 @@ class MotorGroup {
   void SendState(const Eigen::VectorXd& all_pos, const Eigen::VectorXd& all_vel,
                  const Eigen::VectorXd& all_cur);
 
+  Somatic__MotorCmd* ReceiveCommand();
+
+  Eigen::VectorXd ExecuteCommand(Somatic__MotorCmd* cmd);
+
  private:
   void InitMessage();
 

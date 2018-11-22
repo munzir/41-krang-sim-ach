@@ -55,6 +55,12 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world, KrangAch* krang_ach)
 }
 
 void MyWindow::timeStepping() {
+  // Receive and process commands from ach channels
+  std::vector<bool> lock_joints;
+  Eigen::Matrix<double, 25, 1> forces;
+  krang_ach_->ReceiveAndProcessCommands(&lock_joints, );
+
+
   // Send state on ach channel
   krang_ach_->SendState(krang->getPositions(), krang->getVelocities(),
                         krang->getForces(), GetBaseImuData(krang));
