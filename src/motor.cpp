@@ -166,6 +166,8 @@ Somati__MotorCmd* MotorGroup::RecieveCommand() {
   // Validate the message
   else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) {
     // Check if the message has one of the expected parameters
+    // TODO: For wheels and waist, some of the commands are not legit.
+    // MotorGroup should have a list of legit values and ranges
     int goodParam =
         cmd->has_param && (SOMATIC__MOTOR_PARAM__MOTOR_POSITION == cmd->param ||
                            SOMATIC__MOTOR_PARAM__MOTOR_VELOCITY == cmd->param ||
@@ -182,8 +184,8 @@ Somati__MotorCmd* MotorGroup::RecieveCommand() {
     // Use somatic interface to combine the finalize the checks in case there is
     // an error
     int somGoodParam = somatic_d_check_msg(
-        daemon_, goodParam, "motor_cmd", "invalid motor param, set: %d, val: %d",
-        cmd->has_param, cmd->param);
+        daemon_, goodParam, "motor_cmd",
+        "invalid motor param, set: %d, val: %d", cmd->has_param, cmd->param);
     int somGoodValues = somatic_d_check_msg(daemon_, goodValues, "motor_cmd",
                                             "wrong motor count: %d, wanted %d",
                                             cmd->values->n_data, n_);
@@ -195,4 +197,8 @@ Somati__MotorCmd* MotorGroup::RecieveCommand() {
     else
       return NULL;
   }
+}
+//=============================================================================
+//// Execute ach command
+Eigen::VectorXd MotorGroup::ExecuteCommand(Somatic__MotorCmd* cmd) {
 }
