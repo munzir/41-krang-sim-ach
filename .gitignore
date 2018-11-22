@@ -13,7 +13,19 @@
 # params
 !/cfg/
 /cfg/*
-!/cfg/params.cfg
+!/cfg/ach_params.cfg
+!/cfg/dart_params.cfg
+!/cfg/krang_motors.cfg
+!/cfg/amc/
+/cfg/amc/*
+!/cfg/amc/bly343d.cfg
+!/cfg/schunk/
+/cfg/schunk/*
+!/cfg/schunk/prl60.cfg
+!/cfg/schunk/prl80.cfg
+!/cfg/schunk/prl100.cfg
+!/cfg/schunk/prl120.cfg
+!/cfg/schunk/waist.cfg
 
 # include
 !/include/
