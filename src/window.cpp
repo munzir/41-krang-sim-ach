@@ -37,34 +37,24 @@
  * @file window.cpp
  * @author Munzir Zafar
  * @date Nov 14, 2018
- * @brief Manages the window rendering the animation of Krang from a cfg file
+ * @brief Manages the window rendering the animation of the robot
  */
 #include "window.h"
 
-#include <dart/dart.hpp>
-#include <dart/gui/gui.hpp>
-#include "load_objects.h"
+#include <dart/dart.hpp>              // dart::simulation::WorldPtr
+#include "robot_control_interface.h"  // RobotControlInterface
 
-MyWindow::MyWindow(const dart::simulation::WorldPtr& world, KrangAch* krang_ach)
-    : krang_ach_(krang_ach) {
+MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
+                   RobotControlInterface* robot_control_interface)
+    : robot_control_interface_(robot_control_interface) {
   // Attach the world passed in the input argument to the window
   setWorld(world);
-
-  // fetch the robot from the world
-  krang = world->getSkeleton("krang");
 }
 
 void MyWindow::timeStepping() {
-  // Receive and process commands from ach channels
-  std::vector<bool> lock_joints;
-  Eigen::Matrix<double, 25, 1> forces;
-  krang_ach_->ReceiveAndProcessCommands(&lock_joints, );
+  // Receive and execute commands from and send states to the interface
+  robot_control_interface_->Run();
 
-
-  // Send state on ach channel
-  krang_ach_->SendState(krang->getPositions(), krang->getVelocities(),
-                        krang->getForces(), GetBaseImuData(krang));
-
-  // Run the world
+  // Step the world through time
   SimWindow::timeStepping();
 }

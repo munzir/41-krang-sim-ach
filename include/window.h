@@ -38,27 +38,27 @@
  * @author Munzir Zafar
  * @date Nov 14, 2018
  * @brief Header for MyWindow.cpp that manages the window rendering the
- * animation of Krang from a cfg file
+ * animation of the robot
  */
 
 #ifndef KRANG_SIMULATION_WINDOW_H_
 #define KRANG_SIMULATION_WINDOW_H_
 
-#include <dart/dart.hpp>
-#include <dart/gui/gui.hpp>
+#include <dart/dart.hpp>     //dart::simulation::WorldPtr
+#include <dart/gui/gui.hpp>  // dart::gui::SimWindow
 
-#include "ach_utils.h"
+#include "robot_control_interface.h"  // RobotControlInterface
 
 class MyWindow : public dart::gui::SimWindow {
  public:
-  MyWindow(const dart::simulation::WorldPtr& world, KrangAch* krang_ach);
+  MyWindow(const dart::simulation::WorldPtr& world,
+           RobotControlInterface* robot_control_interface);
   ~MyWindow() {}
 
   void timeStepping() override;
 
  public:
-  dart::dynamics::SkeletonPtr krang;
-  KrangAch* krang_ach_;
+  RobotControlInterface* robot_control_interface_;
 };
 
 #endif  // KRANG_SIMULATION_WINDOW_H_
