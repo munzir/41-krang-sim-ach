@@ -40,46 +40,38 @@
  * @brief Executable that runs krang simulation and allows other programs
  * to interact with the simulation via ach channels
  */
-#include <stdlib.h>
+#include <stdlib.h>  // atexit()
 
-#include "load_objects.h"
-#include "sim_config.h"
-#include "window.h"
+#include <dart/dart.hpp>  // dart::simulation::WorldPtr, glutInit(), glutMainLoop()
 
-#include <dart/dart.hpp>
+#include "dart_world.h"               // CreateWorld()
+#include "robot_control_interface.h"  // RobotControlInterface
+#include "window.h"                   // MyWindow
 
 //=============================================================================
 // This function is written because glutMainLoop() does not ever return.
 // Instead it calls exit(0). The cleaning that could be elegantly done in
-// KrangAch destructor has now to be done explicitly, because no destructor
-// will be executed upon exit. By making use of atexit(ExitFunction), we will
-// force the execution of ExitFunction() upon exit. Since this function is not
-// allowed to accept any arguments, we are defining KrangAch pointer as a
-// global variable to allow this function to access the KrangAch object that is
-// to be destroyed.
-KrangAch* krang_ach;
+// RobotControlInterface destructor has now to be done explicitly, because no
+// destructor will be executed upon exit. By making use of atexit(ExitFunction),
+// we will force the execution of ExitFunction() upon exit. Since this function
+// is not allowed to accept any arguments, we are defining RobotControlInterface
+// pointer as a global variable to allow this function to access the
+// RobotControlInterface object that is to be destroyed.
+RobotControlInterface* krang_ach;
 void ExitFunction() { krang_ach->Destroy(); }
 
 //=============================================================================
 int main(int argc, char* argv[]) {
-  // Read parameters from the cfg file
-  SimConfig params;
-  ReadConfigParams("../cfg/params.cfg", &params);
+  // Creates world and loads all objects with desired initial configuration
+  char path_to_dart_params[] = "../cfg/dart_params.cfg";
+  dart::simulation::WorldPtr world = CreateWorld(path_to_dart_params);
 
-  // Create world
-  dart::simulation::WorldPtr world =
-      std::make_shared<dart::simulation::World>();
-
-  // Load Floor
-  dart::dynamics::SkeletonPtr floor = CreateFloor();
-  world->addSkeleton(floor);  // add ground and robot to the world pointer
-
-  // Load robot
-  dart::dynamics::SkeletonPtr robot = CreateKrang(params);
-  world->addSkeleton(robot);
-
-  // Ach communication machinery
-  krang_ach = new KrangAch(params);
+  // Create interface that allows other programs to interface with out robot
+  char path_to_motor_params[] = "../cfg/krang_motor.cfg";
+  char path_to_interface_params[] = "../cfg/ach_params.cfg";
+  krang_ach =
+      new RobotControlInterface(world->getSkeleton("krang"),
+                                path_to_motor_params, path_to_interface_params);
 
   // The window object that has all the callback functions defined which are
   // executed during simulation. It therefore needs access to all other objects
