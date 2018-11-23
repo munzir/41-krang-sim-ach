@@ -30,20 +30,22 @@
 # include
 !/include/
 /include/*
-!/include/load_objects.h
 !/include/window.h
 !/include/sim_config.h
 !/include/ach_utils.h
 !/include/motor.h
+!/include/dart_world.h
+!/include/robot_control_interface.h
 
 # src
 !/src/
 /src/*
-!/src/load_objects.cpp
 !/src/window.cpp
 !/src/sim_config.cpp
 !/src/ach_utils.cpp
 !/src/motor.cpp
+!/src/dart_world.cpp
+!/src/robot_control_interface.cpp
 
 # exe
 !/exe/
