@@ -159,8 +159,14 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
   std::cout << std::endl;
 }
 RobotControlInterface::Destroy() {
-  for (int i = 0; i < motor_groups_.size(); i++) motor_groups_(i)->Destroy();
-  for (int i = 0; i < sensor_groups_.size(); i++) sensor_groups_(i)->Destroy();
+  for (int i = 0; i < motor_groups_.size(); i++) {
+    motor_groups_(i)->Destroy();
+    delete motor_groups_(i);
+  }
+  for (int i = 0; i < sensor_groups_.size(); i++) {
+    sensor_groups_(i)->Destroy();
+    delete sensor_groups_(i);
+  }
   interface_context_.Destroy();
 }
 RobotControlInterface::Run() {
