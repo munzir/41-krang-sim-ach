@@ -44,14 +44,16 @@
 
 #include "robot_control_interface.h"
 
+#include <assert.h>                    // assert()
 #include <config4cpp/Configuration.h>  // config4cpp::Configuration
 #include <stdio.h>                     // std::cout
 #include <dart/dart.hpp>               // dart::dynamics
+#include <iterator>                    // std::istream_iterator
+#include <sstream>                     // std::stringstream
 #include <string>                      // std::string
-#include <stringstream>                // std::stringstream
 
-#include "motor_group.h"    // FindMotorType, MotorGroup()
-#include "sensor_group.h"   // FindSensorType, SensorGroup()
+#include "motor_group.h"   // FindMotorType, MotorGroup()
+#include "sensor_group.h"  // FindSensorType, SensorGroup()
 
 RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
                                              char* motor_config_file,
@@ -62,30 +64,40 @@ RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
   ReadParams(interface_config_file, &params);
 
   for (int i = 0; i < params.num_motor_groups_; i++) {
-    switch (FindMotorType(params.motor_group_joints_(i), motor_config_file)) {
-      case kSchunk: {
-        motor_groups_.push(new MotorGroup<Schunk>(
-            robot, interface_context_, params.motor_group_joints_(i),
-            params.motor_group_command_channel_names_(i),
-            params.motor_group_state_channel_names_(i)));
+    switch (MotorGroupBase::FindMotorType(params.motor_group_joints_[i][0],
+                                          motor_config_file)) {
+      case MotorGroupBase::kSchunk: {
+        motor_groups_.push_back(new MotorGroup<Schunk>(
+            robot, interface_context_, params.motor_group_names_[i],
+            params.motor_group_joints_[i],
+            params.motor_group_command_channel_names_[i],
+            params.motor_group_state_channel_names_[i]));
         break;
       }
-      case kAmc: {
-        motor_groups_.push(new MotorGroup<Amc>(
-            robot, interface_context_, params.motor_group_joints_(i),
-            params.motor_group_command_channel_names_(i),
-            params.motor_group_state_channel_names_(i)));
+      case MotorGroupBase::kAmc: {
+        motor_groups_.push_back(new MotorGroup<Amc>(
+            robot, interface_context_, params.motor_group_joints_[i],
+            params.motor_group_command_channel_names_[i],
+            params.motor_group_state_channel_names_[i]));
+        break;
+      }
+      case MotorGroupBase::kUnlisted: {
+        assert(false && "Error Identifying motor type");
         break;
       }
     }
   }
 
   for (int i = 0; i < params.num_sensor_groups_, i++) {
-    switch (FindSensorType(params.sensor_group_names_(i))) {
-      case kFloatingBaseState: {
-        sensor_groups_.push(new SensorGroup<FloatingBaseState>(
-            robot, interface_context_, params.sensor_group_names_(i),
-            params.sensor_group_state_channel_names_(i)));
+    switch (SensorGroupBase::FindSensorType(params.sensor_group_names_[i])) {
+      case SensorGroupBase::kFloatingBaseState: {
+        sensor_groups_.push_back(new SensorGroup<FloatingBaseState>(
+            robot, interface_context_, params.sensor_group_names_[i],
+            params.sensor_group_state_channel_names_[i]));
+        break;
+      }
+      case SensorGroupBase::kUnlisted: {
+        assert(false && "Sensor name not listed");
         break;
       }
     }
@@ -108,29 +120,44 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
     std::stringstream ss;
     for (int i = 0; i < params->num_motor_groups_; i++) {
       // Construct strings to lookup in the cfg file
-      ss << "motor_group" << i + 1;
-      std::string motor_group_str = ss.str();
-      std::string motor_group_cmd_chan_str = motor_group + "_cmd_chan";
-      std::string motor_group_state_chan_str = motor_group + "_state_chan";
+      ss1 << "motor_group" << i + 1;
+      std::string motor_group_str = ss1.str();
+      std::string motor_group_joints_str = motor_group_str + "_joints";
+      std::string motor_group_cmd_chan_str = motor_group_str + "_cmd_chan";
+      std::string motor_group_state_chan_str = motor_group_str + "_state_chan";
 
-      // Lookup motor group joint names list
-      params->motor_group_joints_.push(
+      // Lookup motor group name
+      params->motor_group_names_.push_back(
           std::string(cfg->lookupString(scope, motor_group_str.c_str())));
-      std::cout << motor_group_str << ": " << params->motor_group_joints_(i);
+      std::cout << motor_group_str << ": " << params->motor_group_names_[i];
+
+      // Lookup motor group joint names list. The list is a space separated.
+      // So we split the string by spaces and store it as a vector
+      std::string motor_group_all_joints(
+          cfg->lookupString(scope, motor_group_joints_str.c_str()));
+      std::stringstream ss2(motor_group_all_joints);
+      std::istream_iterator<std::string> begin(ss2);
+      std::istream_iterator<std::string> end;
+      params->motor_group_joints_.push_back(std::vector<std::string>(begin, end));
+
+      params->motor_group_joints_.push_back(std::string());
+      std::cout << motor_group_joints_str << ": "
+                << params->motor_group_joints_[i];
 
       // Lookup command channel name for the motor group
-      params->motor_group_command_channel_names_.push(std::string(
+      params->motor_group_command_channel_names_.push_back(std::string(
           cfg->lookupString(scope, motor_group_cmd_chan_str.c_str())));
       std::cout << motor_group_cmd_chan_str << ": "
-                << params->motor_group_command_channel_names_(i);
+                << params->motor_group_command_channel_names_[i];
 
       // Lookup state channel name for the motor group
-      params->motor_group_state_channel_names_.push(std::string(
+      params->motor_group_state_channel_names_.push_back(std::string(
           cfg->lookupString(scope, motor_group_state_chan_str.c_str())));
       std::cout << motor_group_state_chan_str << ": "
-                << params->motor_group_state_channel_names_(i);
+                << params->motor_group_state_channel_names_[i];
 
-      ss.clear();
+      ss1.clear();
+      ss2.clear();
     }
     for (int i = 0; i < params->num_sensor_groups_; i++) {
       // Construct strings to lookup in the cfg file
@@ -139,15 +166,15 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
       std::string sensor_group_state_chan_str = sensor_group + "_state_chan";
 
       // Lookup sensor group name
-      params->sensor_group_names_.push(
+      params->sensor_group_names_.push_back(
           std::string(cfg->lookupString(scope, sensor_group_str.c_str())));
-      std::cout << sensor_group_str << ": " << params->sensor_group_joints_(i);
+      std::cout << sensor_group_str << ": " << params->sensor_group_joints_[i];
 
       // Lookup state channel name for the sensor group
-      params->sensor_group_state_channel_names_.push(std::string(
+      params->sensor_group_state_channel_names_.push_back(std::string(
           cfg->lookupString(scope, sensor_group_state_chan_str.c_str())));
       std::cout << sensor_group_state_chan_str << ": "
-                << params->sensor_group_state_channel_names_(i);
+                << params->sensor_group_state_channel_names_[i];
 
       ss.clear();
     }
@@ -160,16 +187,16 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
 }
 RobotControlInterface::Destroy() {
   for (int i = 0; i < motor_groups_.size(); i++) {
-    motor_groups_(i)->Destroy();
-    delete motor_groups_(i);
+    motor_groups_[i]->Destroy();
+    delete motor_groups_[i];
   }
   for (int i = 0; i < sensor_groups_.size(); i++) {
-    sensor_groups_(i)->Destroy();
-    delete sensor_groups_(i);
+    sensor_groups_[i]->Destroy();
+    delete sensor_groups_[i];
   }
   interface_context_.Destroy();
 }
 RobotControlInterface::Run() {
-  for (int i = 0; i < motor_groups_.size(); i++) motor_groups_(i)->Run();
-  for (int i = 0; i < sensor_groups_.size(); i++) sensor_groups_(i)->Run();
+  for (int i = 0; i < motor_groups_.size(); i++) motor_groups_[i]->Run();
+  for (int i = 0; i < sensor_groups_.size(); i++) sensor_groups_[i]->Run();
 }

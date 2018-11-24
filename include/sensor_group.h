@@ -46,11 +46,21 @@
 
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
+#include <vector>         // std::vector
 
 #include "ach_interface.h"  // InterfaceContext, Interface
 
 class SensorGroupBase {
  public:
+  enum SensorType { kFloatingBaseState = 0, kUnlisted };
+  static SensorType FindSensorType(std::string& sensor_name) {
+    std::vector<std::string> sensor_name_list = {"floating-base-state"};
+    for (int i = 0; i < sensor_name_list.size(); i++) {
+      if (!sensor_name.compare(sensor_name_list(i))) return (SensorType)i;
+    }
+    return kUnlisted;
+  }
+
   SensorGroupBase() {}
   ~SensorGroup {}
 

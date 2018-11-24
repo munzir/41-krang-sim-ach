@@ -65,7 +65,8 @@ class RobotControlInterface {
  private:
   struct RobotControlInterfaceParams {
     int num_motor_groups;
-    std::vector<std::string> motor_group_joints_;
+    std::vector<std::string> motor_group_names_;
+    std::vector<std::vector<std::string>> motor_group_joints_;
     std::vector<std::string> motor_group_command_channel_names_;
     std::vector<std::string> motor_group_state_channel_names_;
     int num_sesnor_groups_;

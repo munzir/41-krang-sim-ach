@@ -37,6 +37,7 @@
 !/include/dart_world.h
 !/include/robot_control_interface.h
 !/include/sensor_group.h
+!/include/motor_group.h
 
 # src
 !/src/
