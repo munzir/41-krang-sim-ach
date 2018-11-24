@@ -52,6 +52,7 @@
 #include <iostream>                    // std::istringstream
 #include <memory>                      // std::make_shared
 #include <string>                      // std::string
+#include <vector>                      // std::vector
 
 #include "../../18h-Util/file_ops.hpp"  // readInputFileAsMatrix()
 
