@@ -49,11 +49,11 @@
 #include <string>                      // std::string
 #include <vector>                      // std::vector
 
-#include "ach_interface.h"  // InterfaceContext, Interface
+#include "ach_interface.h"  // InterfaceContext, SchunkMotorInterface, AmcMotorInterface
+#include "motor.h"          // MotorBase::, SchunkMotor, AmcMotor
 
-class MotorGroupBase {
+class MotorGroup {
  public:
-  enum MotorType { kSchunk = 0, kAmc, kUnlisted };
   enum MotorCommandType {
     kLock = 0,
     kPosition,
@@ -62,63 +62,49 @@ class MotorGroupBase {
     kUnlock,
     kDoNothing
   };
-  static MotorType FindMotorType(std::string& robot_joint_name,
-                                 char* motor_config_file) {
-    // The list of motor names corresponding to each motor type
-    std::vector<std::string> motor_name_list = {"schunk", "amc"};
-
-    // Get the motor name from the motor_config_file
-    std::string motor_name;
-    config4cpp::Configuration* cfg = config4cpp::Configuration::create();
-    const char* scope = "";
-    try {
-      cfg->parse(motor_config_file);
-      motor_name = std::string(
-          cfg->lookupString(scope, (robot_joint_name + "_make").c_str()));
-    } catch (const config4cpp::ConfigurationException& ex) {
-      std::cerr << ex.c_str() << std::endl;
-      cfg->destroy();
-      return kUnlisted;
-    }
-
-    // Convert motor name to motor type and return the output
-    for (int i = 0; i < motor_name_list.size(); i++) {
-      if (!motor_name.compare(motor_name_list(i))) return (MotorType)i;
-    }
-    return kUnlisted;
-  }
-
-  MotorGroupBase() {}
-  ~MotorGroup {}
-
-  virtual void Run() {}
-  virtual void Destroy() {}
-}
-
-template <class Motor>
-class MotorGroup : public MotorGroupBase {
- public:
   MotorGroup(dart::dynamics::SkeletonPtr robot,
              InterfaceContext& interface_context,
              string::string& motor_group_name,
              std::vector<std::string>& motor_group_joints,
+             const* motor_config_file,
              std::string& motor_group_command_channel_name,
              std::string& motor_group_state_channel_name) {
-    for (int i = 0; i < motor_group_joints.size(); i++) {
-      motor_vector_.push_back(new Motor(robot, motor_group_joints[i]));
-      command_val_.push_back(0.0);
+    switch (
+        MotorBase::FindMotorType(motor_group_joints[i][0], motor_config_file)) {
+      case MotorBase::kSchunk: {
+        for (int i = 0; i < motor_group_joints.size(); i++) {
+          motor_vector_.push_back(
+              new SchunkMotor(robot, motor_group_joints[i]));
+          command_val_.push_back(0.0);
+        }
+        interface_ = new SchunkMotorInterface(
+            motor_vector_, interface_context, motor_group_name,
+            motor_group_command_channel_name, motor_group_state_channel_name);
+        break;
+      }
+      case MotorBase::kAmc: {
+        for (int i = 0; i < motor_group_joints.size(); i++) {
+          motor_vector_.push_back(new AmcMotor(robot, motor_group_joints[i]));
+          command_val_.push_back(0.0);
+        }
+        interface_ = new AmcMotorInterface(
+            motor_vector_, interface_context, motor_group_name,
+            motor_group_command_channel_name, motor_group_state_channel_name);
+        break;
+      }
+      case MotorBase::kUnlisted: {
+        assert(false && "Error Identifying motor type");
+        break;
+      }
     }
-    interface_->Init(motor_vector_, interface_context, motor_group_name,
-                     motor_group_command_channel_name,
-                     motor_group_state_channel_name);
   }
 
   ~MotorGroup() { Destroy(); }
 
   void Run() {
     // Receive and execute command
-    interface_->ReceiveCommand(&command, &command_val_);
-    if(&command_ != kDoNothing) {
+    interface_->ReceiveCommand(&command_, &command_val_);
+    if (&command_ != kDoNothing) {
       Execute(command_, command_val_);
     }
 
@@ -129,12 +115,14 @@ class MotorGroup : public MotorGroupBase {
 
   void Destroy() {
     for (int i = 0; i < motor_vector_.size(); i++) delete motor_vector_[i];
+    motor_vector_.clear();
+    command_val_.clear();
     interface_->Destroy();
   }
 
  private:
-  std::vector<Motor> motor_vector_;
-  Interface<Motor> interface_;
+  std::vector<MotorBase*> motor_vector_;
+  MotorInterfaceBase interface_;
 
   MotorCommandType command_;
   std::vector<double> command_val_;

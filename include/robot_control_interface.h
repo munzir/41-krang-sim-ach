@@ -76,8 +76,8 @@ class RobotControlInterface {
 
   ReadParams(char* interface_config_file_, RobotControlInterfaceParams* params);
   InterfaceContext interface_context_;
-  std::vector<MotorGroupBase*> motor_groups_;
-  std::vector<SensorGroupBase*> sensor_groups_;
+  std::vector<MotorGroup*> motor_groups_;
+  std::vector<SensorGroup*> sensor_groups_;
 }
 
 #endif  // KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_

@@ -48,36 +48,30 @@
 #include <string>         // std::string
 #include <vector>         // std::vector
 
-#include "ach_interface.h"  // InterfaceContext, Interface
+#include "ach_interface.h"  // InterfaceContext, FloatingBaseStateSensorInterface
+#include "sensor.h"         // SensorBase::, FloatingBaseStateSensor
 
-class SensorGroupBase {
- public:
-  enum SensorType { kFloatingBaseState = 0, kUnlisted };
-  static SensorType FindSensorType(std::string& sensor_name) {
-    std::vector<std::string> sensor_name_list = {"floating-base-state"};
-    for (int i = 0; i < sensor_name_list.size(); i++) {
-      if (!sensor_name.compare(sensor_name_list(i))) return (SensorType)i;
-    }
-    return kUnlisted;
-  }
-
-  SensorGroupBase() {}
-  ~SensorGroup {}
-
-  virtual void Run() {}
-  virtual void Destroy() {}
-}
-
-template <class Sensor>
-class SensorGroup : public SensorGroupBase {
+class SensorGroup {
  public:
   SensorGroup(dart::dynamics::SkeletonPtr robot,
               InterfaceContext& interface_context,
               std::string& sensor_group_name,
-              std::string& sensor_group_state_channel_name)
-      : sensor_(robot, sensor_group_name) {
-    interface_->Init(sensor_, interface_context, sensor_group_name,
-                     sensor_group_state_channel_name);
+              std::string& sensor_group_state_channel_name) {
+    switch (SensorBase::FindSensorType(sensor_group_name)) {
+      case SensorBase::kFloatingBaseState: {
+        sensor_ = new FloatingBaseStateSensor(robot, interface_context_,
+                                              sensor_group_name,
+                                              sensor_group_state_channel_name);
+        interface_ = new FloatingBaseStateSensorInterface(
+            sensor_, interface_context, sensor_group_name,
+            sensor_group_state_channel_name);
+        break;
+      }
+      case SensorBase::kUnlisted: {
+        assert(false && "Sensor name not listed");
+        break;
+      }
+    }
   }
 
   ~SensorGroup() { Destroy(); }
@@ -87,11 +81,14 @@ class SensorGroup : public SensorGroupBase {
     interface_->SendState();
   }
 
-  void Destroy() { interface_->Destroy(); }
+  void Destroy() {
+    sensor_->Destroy();
+    interface_->Destroy();
+  }
 
  private:
-  Sensor sensor_;
-  Interface<Sensor> interface_;
+  SensorBase* sensor_;
+  SensorInterfaceBase interface_;
 }
 
 #endif  // KRANG_SIMULATION_SENSOR_GROUP_H_
