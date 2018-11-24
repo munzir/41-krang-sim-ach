@@ -46,6 +46,12 @@
 #define KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_
 
 #include <dart/dart.hpp>  // dart::dynamics
+#include <string>         // std::string
+#include <vector>         // std::vector
+
+#include "ach_interface.h"  // InterfaceContext
+#include "motor_group.h"    // MotorGroupBase
+#include "sensor_group.h"   // SensorGroupBase
 
 class RobotControlInterface {
  public:
@@ -55,6 +61,22 @@ class RobotControlInterface {
   ~RobotControlInterface() { Destroy(); }
 
   void Run();
+
+ private:
+  struct RobotControlInterfaceParams {
+    int num_motor_groups;
+    std::vector<std::string> motor_group_joints_;
+    std::vector<std::string> motor_group_command_channel_names_;
+    std::vector<std::string> motor_group_state_channel_names_;
+    int num_sesnor_groups_;
+    std::vector<std::string> sensor_group_names_;
+    std::vector<std::string> sensor_group_state_channel_names_;
+  };
+
+  ReadParams(char* interface_config_file_, RobotControlInterfaceParams* params);
+  InterfaceContext interface_context_;
+  std::vector<MotorGroupBase*> motor_groups_;
+  std::vector<SensorGroupBase*> sensor_groups_;
 }
 
 #endif  // KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_
