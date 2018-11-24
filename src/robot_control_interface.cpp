@@ -63,44 +63,17 @@ RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
   RobotControlInterfaceParams params;
   ReadParams(interface_config_file, &params);
 
-  for (int i = 0; i < params.num_motor_groups_; i++) {
-    switch (MotorGroupBase::FindMotorType(params.motor_group_joints_[i][0],
-                                          motor_config_file)) {
-      case MotorGroupBase::kSchunk: {
-        motor_groups_.push_back(new MotorGroup<Schunk>(
-            robot, interface_context_, params.motor_group_names_[i],
-            params.motor_group_joints_[i],
-            params.motor_group_command_channel_names_[i],
-            params.motor_group_state_channel_names_[i]));
-        break;
-      }
-      case MotorGroupBase::kAmc: {
-        motor_groups_.push_back(new MotorGroup<Amc>(
-            robot, interface_context_, params.motor_group_joints_[i],
-            params.motor_group_command_channel_names_[i],
-            params.motor_group_state_channel_names_[i]));
-        break;
-      }
-      case MotorGroupBase::kUnlisted: {
-        assert(false && "Error Identifying motor type");
-        break;
-      }
-    }
+  for (int i = 0; i < params.num_sensor_gorups; i++) {
+    sensor_groups_.push_back(new SensorGroup(
+        robot, interface_context_, params.sensor_group_names_[i],
+        params.sensor_group_state_channel_names_[i]));
   }
-
-  for (int i = 0; i < params.num_sensor_groups_, i++) {
-    switch (SensorGroupBase::FindSensorType(params.sensor_group_names_[i])) {
-      case SensorGroupBase::kFloatingBaseState: {
-        sensor_groups_.push_back(new SensorGroup<FloatingBaseState>(
-            robot, interface_context_, params.sensor_group_names_[i],
-            params.sensor_group_state_channel_names_[i]));
-        break;
-      }
-      case SensorGroupBase::kUnlisted: {
-        assert(false && "Sensor name not listed");
-        break;
-      }
-    }
+  for (int i = 0; i < params.num_motor_groups; i++) {
+    motor_groups_.push_back(
+        new MotorGroup(robot, interface_context_, params.motor_group_names_[i],
+                       params.motor_group_joints_[i], motor_config_file,
+                       params.motor_group_command_channel_names_[i],
+                       params.motor_group_state_channel_names_[i]));
   }
 }
 RobotControlInterface::ReadParams(char* interface_config_file_,
@@ -138,7 +111,8 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
       std::stringstream ss2(motor_group_all_joints);
       std::istream_iterator<std::string> begin(ss2);
       std::istream_iterator<std::string> end;
-      params->motor_group_joints_.push_back(std::vector<std::string>(begin, end));
+      params->motor_group_joints_.push_back(
+          std::vector<std::string>(begin, end));
 
       params->motor_group_joints_.push_back(std::string());
       std::cout << motor_group_joints_str << ": "
@@ -190,10 +164,12 @@ RobotControlInterface::Destroy() {
     motor_groups_[i]->Destroy();
     delete motor_groups_[i];
   }
+  motor_group_.clear();
   for (int i = 0; i < sensor_groups_.size(); i++) {
     sensor_groups_[i]->Destroy();
     delete sensor_groups_[i];
   }
+  sensor_groups_.clear();
   interface_context_.Destroy();
 }
 RobotControlInterface::Run() {
