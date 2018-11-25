@@ -25,7 +25,9 @@
 !/cfg/schunk/prl80.cfg
 !/cfg/schunk/prl100.cfg
 !/cfg/schunk/prl120.cfg
-!/cfg/schunk/waist.cfg
+!/cfg/waist/
+/cfg/waist/*
+!/cfg/waist/waist.cfg
 
 # include
 !/include/
@@ -41,6 +43,7 @@
 !/include/sensor_base.h
 !/include/motor_base.h
 !/include/floating_base_state_sensor.h
+!/include/ach_interface.h
 
 # src
 !/src/
@@ -52,6 +55,7 @@
 !/src/dart_world.cpp
 !/src/robot_control_interface.cpp
 !/src/floating_base_state_sensor.cpp
+!/src/ach_interface.cpp
 
 # exe
 !/exe/

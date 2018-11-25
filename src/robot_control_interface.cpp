@@ -58,7 +58,7 @@
 RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
                                              char* motor_config_file,
                                              char* interface_config_file) {
-  interface_context_.Init(interface_config_file);
+  interface_context_ = new InterfaceContext(interface_config_file);
 
   RobotControlInterfaceParams params;
   ReadParams(interface_config_file, &params);
