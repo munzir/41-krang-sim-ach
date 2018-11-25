@@ -88,6 +88,8 @@ namespace motor {
       return new SchunkMotor(robot, joint_name, motor_config_file);
     } else if (!motor_name.compare("amc")) {
       return new AmcMotor(robot, joint_name, motor_config_file);
+    } else if (!motor_name.compare("waist")) {
+      return new WaistMotor(robot, joint_name, motor_config_file);
     } else {
       assert(false && "Motor name not listed");
     }

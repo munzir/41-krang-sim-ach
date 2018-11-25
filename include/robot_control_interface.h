@@ -75,7 +75,7 @@ class RobotControlInterface {
   };
 
   ReadParams(char* interface_config_file_, RobotControlInterfaceParams* params);
-  InterfaceContext interface_context_;
+  InterfaceContext* interface_context_;
   std::vector<MotorGroup*> motor_groups_;
   std::vector<SensorGroup*> sensor_groups_;
 }
