@@ -40,12 +40,14 @@
  * @brief Base class for all sensors
  */
 
+#ifndef KRANG_SIMULATION_SENSOR_BASE_H_
+#define KRANG_SIMULATION_SENSOR_BASE_H_
+
 #include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
 
 #include <assert.h>
 #include <dart/dart.hpp>    // dart::dynamics
 #include <string>           // std::string
-#include "ach_interface.h"  // InterfaceContext
 
 class SensorBase {
  public:
@@ -56,16 +58,12 @@ class SensorBase {
 }
 
 namespace sensor {
-  SensorBase* Create(dart::dynamics::SkeletonPtr robot,
-                     InterfaceContext & interface_context,
-                     std::string & sensor_group_name,
-                     std::string & sensor_group_state_channel_name) {
-    if (!sensor_group_name.compare("floating-base-state")) {
-      return new FloatingBaseStateSensor(robot, interface_context,
-                                         sensor_group_name,
-                                         sensor_group_state_channel_name);
-    } else {
-      assert(false && "Sensor name not listed");
-    }
+SensorBase* Create(dart::dynamics::SkeletonPtr robot) {
+  if (!sensor_group_name.compare("floating-base-state")) {
+    return new FloatingBaseStateSensor(robot);
+  } else {
+    assert(false && "Sensor name not listed");
   }
 }
+}
+#endif // KRANG_SIMULATION_SENSOR_BASE_H_

@@ -69,34 +69,14 @@ class MotorGroup {
              const* motor_config_file,
              std::string& motor_group_command_channel_name,
              std::string& motor_group_state_channel_name) {
-    switch (
-        MotorBase::FindMotorType(motor_group_joints[i][0], motor_config_file)) {
-      case MotorBase::kSchunk: {
-        for (int i = 0; i < motor_group_joints.size(); i++) {
-          motor_vector_.push_back(
-              new SchunkMotor(robot, motor_group_joints[i]));
-          command_val_.push_back(0.0);
-        }
-        interface_ = new SchunkMotorInterface(
-            motor_vector_, interface_context, motor_group_name,
-            motor_group_command_channel_name, motor_group_state_channel_name);
-        break;
-      }
-      case MotorBase::kAmc: {
-        for (int i = 0; i < motor_group_joints.size(); i++) {
-          motor_vector_.push_back(new AmcMotor(robot, motor_group_joints[i]));
-          command_val_.push_back(0.0);
-        }
-        interface_ = new AmcMotorInterface(
-            motor_vector_, interface_context, motor_group_name,
-            motor_group_command_channel_name, motor_group_state_channel_name);
-        break;
-      }
-      case MotorBase::kUnlisted: {
-        assert(false && "Error Identifying motor type");
-        break;
-      }
+    for (int i = 0; i < motor_group_joints.size(); i++) {
+      motor_vector_.push_back(
+          motor::Create(robot, motor_group_joints[i], motor_config_file));
+      command_val_.push_back(0.0);
     }
+    interface_ = interface::Create(
+        motor_vector_, interface_context, motor_group_name,
+        motor_group_command_channel_name, motor_group_state_channel_name);
   }
 
   ~MotorGroup() { Destroy(); }
