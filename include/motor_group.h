@@ -101,10 +101,46 @@ class MotorGroup {
 
   ~MotorGroup() { Destroy(); }
 
+  void Update() {
+    for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Update();
+  }
+
+  void Execute(MotorCommandType& command, std::vector<double>& command_val) {
+    switch (command) {
+      case kLock: {
+        for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Lock();
+        break;
+      }
+      case kUnlock: {
+        for (int i = 0; i < motor_vector_.size(); i++)
+          motor_vector_[i]->Unlock();
+        break;
+      }
+      case kPosition: {
+        for (int i = 0; i < motor_vector_.size(); i++)
+          motor_vector_[i]->PositionCmd(command_vals[i]);
+        break;
+      }
+      case kVelocity: {
+        for (int i = 0; i < motor_vector_.size(); i++)
+          motor_vector_[i]->VelocityCmd(command_vals[i]);
+        break;
+      }
+      case kCurrent: {
+        for (int i = 0; i < motor_vector_.size(); i++)
+          motor_vector_[i]->CurrentCmd(command_vals[i]);
+        break;
+      }
+      case kDoNothing: {
+        break;
+      }
+    }
+  }
+
   void Run() {
     // Receive and execute command
     interface_->ReceiveCommand(&command_, &command_val_);
-    if (&command_ != kDoNothing) {
+    if (command_ != kDoNothing) {
       Execute(command_, command_val_);
     }
 
@@ -122,7 +158,7 @@ class MotorGroup {
 
  private:
   std::vector<MotorBase*> motor_vector_;
-  MotorInterfaceBase interface_;
+  MotorInterfaceBase* interface_;
 
   MotorCommandType command_;
   std::vector<double> command_val_;

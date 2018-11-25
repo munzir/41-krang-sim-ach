@@ -34,51 +34,38 @@
  */
 
 /**
- * @file sensor_group.h
+ * @file sensor_base.h
  * @author Munzir Zafar
  * @date Nov 24, 2018
- * @brief Header for sensor_group.cpp that communicates sensor outputs to
- * communication channels
+ * @brief Base class for all sensors
  */
 
-#ifndef KRANG_SIMULATION_SENSOR_GROUP_H_
-#define KRANG_SIMULATION_SENSOR_GROUP_H_
+#include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
 
-#include <dart/dart.hpp>  // dart::dynamics
-#include <string>         // std::string
-#include <vector>         // std::vector
+#include <assert.h>
+#include <dart/dart.hpp>    // dart::dynamics
+#include <string>           // std::string
+#include "ach_interface.h"  // InterfaceContext
 
-#include "ach_interface.h"  // InterfaceContext, SensorInterfaceBase
-#include "sensor_base.h"    // SensorBase, sensor::
-
-class SensorGroup {
+class SensorBase {
  public:
-  SensorGroup(dart::dynamics::SkeletonPtr robot,
-              InterfaceContext& interface_context,
-              std::string& sensor_group_name,
-              std::string& sensor_group_state_channel_name) {
-    sensor_ = sensor::Create(robot, interface_context_, sensor_group_name,
-                             sensor_group_state_channel_name);
-    interface_ =
-        interface::Create(sensor_, interface_context, sensor_group_name,
-                          sensor_group_state_channel_name);
-  }
-
-  ~SensorGroup() { Destroy(); }
-
-  void Run() {
-    sensor_.Update();
-    interface_->SendState();
-  }
-
-  void Destroy() {
-    sensor_->Destroy();
-    interface_->Destroy();
-  }
-
- private:
-  SensorBase* sensor_;
-  SensorInterfaceBase* interface_;
+  SensorBase();
+  ~SensorBase();
+  virtual void Update();
+  virtual void Destroy();
 }
 
-#endif  // KRANG_SIMULATION_SENSOR_GROUP_H_
+namespace sensor {
+  SensorBase* Create(dart::dynamics::SkeletonPtr robot,
+                     InterfaceContext & interface_context,
+                     std::string & sensor_group_name,
+                     std::string & sensor_group_state_channel_name) {
+    if (!sensor_group_name.compare("floating-base-state")) {
+      return new FloatingBaseStateSensor(robot, interface_context,
+                                         sensor_group_name,
+                                         sensor_group_state_channel_name);
+    } else {
+      assert(false && "Sensor name not listed");
+    }
+  }
+}
