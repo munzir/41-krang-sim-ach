@@ -40,6 +40,7 @@
 !/include/motor_group.h
 !/include/sensor_base.h
 !/include/motor_base.h
+!/include/floating_base_state_sensor.h
 
 # src
 !/src/
@@ -50,6 +51,7 @@
 !/src/motor.cpp
 !/src/dart_world.cpp
 !/src/robot_control_interface.cpp
+!/src/floating_base_state_sensor.cpp
 
 # exe
 !/exe/
