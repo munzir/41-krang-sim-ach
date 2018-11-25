@@ -44,7 +44,6 @@
 #ifndef KRANG_SIMULATION_MOTOR_GROUP_H_
 #define KRANG_SIMULATION_MOTOR_GROUP_H_
 
-#include <config4cpp/Configuration.h>  // config4cpp::Configuration
 #include <dart/dart.hpp>               // dart::dynamics
 #include <string>                      // std::string
 #include <vector>                      // std::vector

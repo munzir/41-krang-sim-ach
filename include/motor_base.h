@@ -47,8 +47,10 @@
 #include "schunk_motor.h"  // FloatingBaseStateSensor
 
 #include <assert.h>
-#include <dart/dart.hpp>  // dart::dynamics
-#include <string>         // std::string
+#include <config4cpp/Configuration.h>  // config4cpp::
+#include <dart/dart.hpp>               // dart::dynamics::
+#include <iostream>                    // std::cerr
+#include <string>                      // std::string
 
 class MotorBase {
  public:
