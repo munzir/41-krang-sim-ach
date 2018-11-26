@@ -34,37 +34,25 @@
  */
 
 /**
- * @file motor_base.h
+ * @file sensor_base.cpp
  * @author Munzir Zafar
- * @date Nov 24, 2018
- * @brief Base class for all motors
+ * @date Nov 26, 2018
+ * @brief Base class for all sensors
  */
 
-#ifndef KRANG_SIMULATION_MOTOR_BASE_H_
-#define KRANG_SIMULATION_MOTOR_BASE_H_
+#include "sensor_base.h"
 
-#include <dart/dart.hpp>  // dart::dynamics::
+#include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
+
+#include <assert.h>
+#include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
-#include <vector>         // std::vector
 
-class MotorBase {
- public:
-  virtual void Update();
-  virtual void Destroy();
-  virtual void Lock();
-  virtual void Unlock();
-  virtual void PositionCmd(double val);
-  virtual void VelocityCmd(double val);
-  virtual void CurrentCmd(double val);
-  virtual void GetPosition();
-  virtual void GetVelocity();
-  virtual void GetCurrent();
-  virtual void GetMotorType();
+SensorBase* sensor::Create(dart::dynamics::SkeletonPtr robot,
+                           std::string& sensor_group_name) {
+  if (!sensor_group_name.compare("floating-base-state")) {
+    return new FloatingBaseStateSensor(robot);
+  } else {
+    assert(false && "Sensor name not listed");
+  }
 }
-
-namespace motor {
-  MotorBase* Create(dart::dynamics::SkeletonPtr robot,
-                    std::vector<std::string> & joint_name,
-                    char* motor_config_file);
-}
-#endif  // KRANG_SIMULATION_MOTOR_BASE_H_

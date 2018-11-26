@@ -34,37 +34,35 @@
  */
 
 /**
- * @file motor_base.h
+ * @file sensor_group.cpp
  * @author Munzir Zafar
- * @date Nov 24, 2018
- * @brief Base class for all motors
+ * @date Nov 26, 2018
+ * @brief Communicates sensor outputs to communication channels
  */
 
-#ifndef KRANG_SIMULATION_MOTOR_BASE_H_
-#define KRANG_SIMULATION_MOTOR_BASE_H_
+#include "sensor_group.h"
 
-#include <dart/dart.hpp>  // dart::dynamics::
+#include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
-#include <vector>         // std::vector
 
-class MotorBase {
- public:
-  virtual void Update();
-  virtual void Destroy();
-  virtual void Lock();
-  virtual void Unlock();
-  virtual void PositionCmd(double val);
-  virtual void VelocityCmd(double val);
-  virtual void CurrentCmd(double val);
-  virtual void GetPosition();
-  virtual void GetVelocity();
-  virtual void GetCurrent();
-  virtual void GetMotorType();
+#include "ach_interface.h"  // InterfaceContext, SensorInterfaceBase
+#include "sensor_base.h"    // SensorBase, sensor::
+
+SensorGroup::SensorGroup(dart::dynamics::SkeletonPtr robot,
+                         InterfaceContext& interface_context,
+                         std::string& sensor_group_name,
+                         std::string& sensor_group_state_channel_name) {
+  sensor_ = sensor::Create(robot, sensor_group_name);
+  interface_ = interface::Create(sensor_, interface_context, sensor_group_name,
+                                 sensor_group_state_channel_name);
 }
 
-namespace motor {
-  MotorBase* Create(dart::dynamics::SkeletonPtr robot,
-                    std::vector<std::string> & joint_name,
-                    char* motor_config_file);
+void SensorGroup::Run() {
+  sensor_.Update();
+  interface_->SendState();
 }
-#endif  // KRANG_SIMULATION_MOTOR_BASE_H_
+
+void SensorGroup::Destroy() {
+  sensor_->Destroy();
+  interface_->Destroy();
+}

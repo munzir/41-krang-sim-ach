@@ -43,11 +43,8 @@
 #ifndef KRANG_SIMULATION_SENSOR_BASE_H_
 #define KRANG_SIMULATION_SENSOR_BASE_H_
 
-#include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
-
-#include <assert.h>
-#include <dart/dart.hpp>    // dart::dynamics
-#include <string>           // std::string
+#include <dart/dart.hpp>  // dart::dynamics
+#include <string>         // std::string
 
 class SensorBase {
  public:
@@ -58,12 +55,7 @@ class SensorBase {
 }
 
 namespace sensor {
-SensorBase* Create(dart::dynamics::SkeletonPtr robot) {
-  if (!sensor_group_name.compare("floating-base-state")) {
-    return new FloatingBaseStateSensor(robot);
-  } else {
-    assert(false && "Sensor name not listed");
-  }
+  SensorBase* Create(dart::dynamics::SkeletonPtr robot,
+                     std::string & sensor_group_name);
 }
-}
-#endif // KRANG_SIMULATION_SENSOR_BASE_H_
+#endif  // KRANG_SIMULATION_SENSOR_BASE_H_

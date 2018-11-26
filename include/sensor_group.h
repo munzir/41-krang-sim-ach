@@ -46,7 +46,6 @@
 
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
-#include <vector>         // std::vector
 
 #include "ach_interface.h"  // InterfaceContext, SensorInterfaceBase
 #include "sensor_base.h"    // SensorBase, sensor::
@@ -56,25 +55,13 @@ class SensorGroup {
   SensorGroup(dart::dynamics::SkeletonPtr robot,
               InterfaceContext& interface_context,
               std::string& sensor_group_name,
-              std::string& sensor_group_state_channel_name) {
-    sensor_ = sensor::Create(robot, interface_context_, sensor_group_name,
-                             sensor_group_state_channel_name);
-    interface_ =
-        interface::Create(sensor_, interface_context, sensor_group_name,
-                          sensor_group_state_channel_name);
-  }
+              std::string& sensor_group_state_channel_name);
 
   ~SensorGroup() { Destroy(); }
 
-  void Run() {
-    sensor_.Update();
-    interface_->SendState();
-  }
+  void Run();
 
-  void Destroy() {
-    sensor_->Destroy();
-    interface_->Destroy();
-  }
+  void Destroy();
 
  private:
   SensorBase* sensor_;

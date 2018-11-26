@@ -57,9 +57,8 @@
 
 RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
                                              char* motor_config_file,
-                                             char* interface_config_file) {
-  interface_context_ = new InterfaceContext(interface_config_file);
-
+                                             char* interface_config_file)
+    : interface_context_(interface_config_file) {
   RobotControlInterfaceParams params;
   ReadParams(interface_config_file, &params);
 
@@ -175,4 +174,5 @@ RobotControlInterface::Destroy() {
 RobotControlInterface::Run() {
   for (int i = 0; i < motor_groups_.size(); i++) motor_groups_[i]->Run();
   for (int i = 0; i < sensor_groups_.size(); i++) sensor_groups_[i]->Run();
+  interface_context_.Run();
 }

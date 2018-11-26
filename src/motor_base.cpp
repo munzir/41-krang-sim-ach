@@ -34,37 +34,50 @@
  */
 
 /**
- * @file motor_base.h
+ * @file motor_base.cpp
  * @author Munzir Zafar
- * @date Nov 24, 2018
+ * @date Nov 15, 2018
  * @brief Base class for all motors
  */
 
-#ifndef KRANG_SIMULATION_MOTOR_BASE_H_
-#define KRANG_SIMULATION_MOTOR_BASE_H_
+#include "motor_base.h"
 
-#include <dart/dart.hpp>  // dart::dynamics::
-#include <string>         // std::string
-#include <vector>         // std::vector
+#include "amc_motor.h"     // AmcMotor
+#include "schunk_motor.h"  // SchunkMotor
+#include "waist_motor.h"   // WaistMotor
 
-class MotorBase {
- public:
-  virtual void Update();
-  virtual void Destroy();
-  virtual void Lock();
-  virtual void Unlock();
-  virtual void PositionCmd(double val);
-  virtual void VelocityCmd(double val);
-  virtual void CurrentCmd(double val);
-  virtual void GetPosition();
-  virtual void GetVelocity();
-  virtual void GetCurrent();
-  virtual void GetMotorType();
+#include <assert.h>                    // assert()
+#include <config4cpp/Configuration.h>  // config4cpp::
+#include <dart/dart.hpp>               // dart::dynamics::
+#include <iostream>                    // std::cerr
+#include <string>                      // std::string
+#include <vector>                      // std::vector
+
+MotorBase* motor::Create(dart::dynamics::SkeletonPtr robot,
+                         std::vector<std::string>& joint_name,
+                         char* motor_config_file) {
+  // Get the motor brand name (or make) from the motor_config_file
+  std::string motor_name;
+  config4cpp::Configuration* cfg = config4cpp::Configuration::create();
+  const char* scope = "";
+  try {
+    cfg->parse(motor_config_file);
+    motor_name =
+        std::string(cfg->lookupString(scope, (joint_name + "_make").c_str()));
+  } catch (const config4cpp::ConfigurationException& ex) {
+    std::cerr << ex.c_str() << std::endl;
+    cfg->destroy();
+    assert(false && "Problem reading motor config file");
+  }
+
+  // Based on the motor brand name call the relevant constructor
+  if (!motor_name.compare("schunk")) {
+    return new SchunkMotor(robot, joint_name, motor_config_file);
+  } else if (!motor_name.compare("amc")) {
+    return new AmcMotor(robot, joint_name, motor_config_file);
+  } else if (!motor_name.compare("waist")) {
+    return new WaistMotor(robot, joint_name, motor_config_file);
+  } else {
+    assert(false && "Motor name not listed");
+  }
 }
-
-namespace motor {
-  MotorBase* Create(dart::dynamics::SkeletonPtr robot,
-                    std::vector<std::string> & joint_name,
-                    char* motor_config_file);
-}
-#endif  // KRANG_SIMULATION_MOTOR_BASE_H_
