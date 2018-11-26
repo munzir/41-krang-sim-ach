@@ -43,22 +43,24 @@
 #ifndef KRANG_SIMULATION_ACH_INTERFACE_H_
 #define KRANG_SIMULATION_ACH_INTERFACE_H_
 
-#include "motor_base.h"   // MotorBase::MotorCommandType, MotorBase*
+#include "motor_base.h"   // MotorBase*
+#include "motor_group.h"  // MotorGroup::MotorCommandType,
 #include "sensor_base.h"  // SensorBase*
 
 #include <amino.h>           // needed by ach.h
 #include <somatic.pb-c.h>    // Somatic__Vector, Somatic__MotorState
 #include <somatic/daemon.h>  // somatic_d_t, somatic_d_opts_t
-#include <time.h> // struct timespec
 
 #include <ach.h>  // ach_channel_t
 
+#include <time.h>  // struct timespec
 #include <string>  // std::string
 #include <vector>  // std::vector
 
 class InterfaceContext {
  public:
   void Init(const char* interface_config_file);
+  void Run();
   void Destroy();
   struct InterfaceContextParams {
     char daemon_identifier_[128];
@@ -79,7 +81,7 @@ class SensorInterfaceBase {
 
 class MotorInterfaceBase {
  public:
-  virtual void ReceiveCommand(MotorBase::MotorCommandType* command,
+  virtual void ReceiveCommand(MotorGroup::MotorCommandType* command,
                               std::vector<double>* command_val_);
   virtual void SendState();
   virtual void Destroy();
@@ -109,7 +111,7 @@ class SchunkMotorInterface : public MotorInterfaceBase {
                        std::string& motor_group_command_channel_name,
                        std::string& motor_group_state_channel_name);
   ~SchunkMotorInterface() { Destroy(); }
-  void ReceiveCommand(MotorBase::MotorCommandType* command,
+  void ReceiveCommand(MotorGroup::MotorCommandType* command,
                       std::vector<double>* command_val_) override;
   void SendState() override;
   void Destroy() override;
@@ -140,10 +142,28 @@ class AmcMotorInterface : public MotorInterfaceBase {
                     std::string& motor_group_command_channel_name,
                     std::string& motor_group_state_channel_name);
   ~AmcMotorInterface() { Destroy(); }
-  void ReceiveCommand(MotorBase::MotorCommandType* command,
+  void ReceiveCommand(MotorGroup::MotorCommandType* command,
                       std::vector<double>* command_val_) override;
   void SendState() override;
   void Destroy() override;
+  void InitMessage();
+
+  const std::vector<MotorBase*>*
+      motor_vector_ptr_;  // const because interface should only be able to read
+                          // from the motor
+  char name_[128];
+  somatic_d_t* daemon_;
+  struct timespec wait_time_;
+  size_t n_;  // module count
+  ach_channel_t cmd_chan_;
+  ach_channel_t state_chan_;
+  Somatic__MotorState state_msg_;
+  struct {
+    Somatic__Vector position_;
+    Somatic__Vector velocity_;
+    Somatic__Vector current_;
+  } state_msg_fields_;
+
 }
 
 class WaistMotorInterface : public MotorInterfaceBase {
@@ -154,10 +174,28 @@ class WaistMotorInterface : public MotorInterfaceBase {
                       std::string& motor_group_command_channel_name,
                       std::string& motor_group_state_channel_name);
   ~WaistMotorInterface() { Destroy(); }
-  void ReceiveCommand(MotorBase::MotorCommandType* command,
+  void ReceiveCommand(MotorGroup::MotorCommandType* command,
                       std::vector<double>* command_val_) override;
   void SendState() override;
   void Destroy() override;
+  void InitMessage();
+
+  const std::vector<MotorBase*>*
+      motor_vector_ptr_;  // const because interface should only be able to read
+                          // from the motor
+  char name_[128];
+  somatic_d_t* daemon_;
+  struct timespec wait_time_;
+  size_t n_;  // module count
+  ach_channel_t cmd_chan_;
+  ach_channel_t state_chan_;
+  Somatic__MotorState state_msg_;
+  struct {
+    Somatic__Vector position_;
+    Somatic__Vector velocity_;
+    Somatic__Vector current_;
+  } state_msg_fields_;
+
 }
 
 namespace interface {

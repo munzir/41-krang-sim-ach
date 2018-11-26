@@ -44,12 +44,13 @@
 #ifndef KRANG_SIMULATION_MOTOR_GROUP_H_
 #define KRANG_SIMULATION_MOTOR_GROUP_H_
 
-#include <dart/dart.hpp>               // dart::dynamics
-#include <string>                      // std::string
-#include <vector>                      // std::vector
-
 #include "ach_interface.h"  // InterfaceContext, SchunkMotorInterface, AmcMotorInterface
-#include "motor.h"          // MotorBase::, SchunkMotor, AmcMotor
+#include "motor_base.h"          // MotorBase::, SchunkMotor, AmcMotor
+
+#include <dart/dart.hpp>  // dart::dynamics
+#include <string>         // std::string
+#include <vector>         // std::vector
+
 
 class MotorGroup {
  public:
@@ -67,73 +68,17 @@ class MotorGroup {
              std::vector<std::string>& motor_group_joints,
              const* motor_config_file,
              std::string& motor_group_command_channel_name,
-             std::string& motor_group_state_channel_name) {
-    for (int i = 0; i < motor_group_joints.size(); i++) {
-      motor_vector_.push_back(
-          motor::Create(robot, motor_group_joints[i], motor_config_file));
-      command_val_.push_back(0.0);
-    }
-    interface_ = interface::Create(
-        motor_vector_, interface_context, motor_group_name,
-        motor_group_command_channel_name, motor_group_state_channel_name);
-  }
+             std::string& motor_group_state_channel_name);
 
   ~MotorGroup() { Destroy(); }
 
-  void Update() {
-    for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Update();
-  }
+  void Update();
 
-  void Execute(MotorCommandType& command, std::vector<double>& command_val) {
-    switch (command) {
-      case kLock: {
-        for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Lock();
-        break;
-      }
-      case kUnlock: {
-        for (int i = 0; i < motor_vector_.size(); i++)
-          motor_vector_[i]->Unlock();
-        break;
-      }
-      case kPosition: {
-        for (int i = 0; i < motor_vector_.size(); i++)
-          motor_vector_[i]->PositionCmd(command_vals[i]);
-        break;
-      }
-      case kVelocity: {
-        for (int i = 0; i < motor_vector_.size(); i++)
-          motor_vector_[i]->VelocityCmd(command_vals[i]);
-        break;
-      }
-      case kCurrent: {
-        for (int i = 0; i < motor_vector_.size(); i++)
-          motor_vector_[i]->CurrentCmd(command_vals[i]);
-        break;
-      }
-      case kDoNothing: {
-        break;
-      }
-    }
-  }
+  void Execute(MotorCommandType& command, std::vector<double>& command_val);
 
-  void Run() {
-    // Receive and execute command
-    interface_->ReceiveCommand(&command_, &command_val_);
-    if (command_ != kDoNothing) {
-      Execute(command_, command_val_);
-    }
+  void Run();
 
-    // Update and send state
-    Update();
-    interface_->SendState();
-  }
-
-  void Destroy() {
-    for (int i = 0; i < motor_vector_.size(); i++) delete motor_vector_[i];
-    motor_vector_.clear();
-    command_val_.clear();
-    interface_->Destroy();
-  }
+  void Destroy();
 
  private:
   std::vector<MotorBase*> motor_vector_;

@@ -56,6 +56,10 @@
 !/src/robot_control_interface.cpp
 !/src/floating_base_state_sensor.cpp
 !/src/ach_interface.cpp
+!/src/sensor_group.cpp
+!/src/motor_group.cpp
+!/src/sensor_base.cpp
+!/src/motor_base.cpp
 
 # exe
 !/exe/
