@@ -42,6 +42,7 @@
 
 #include "ach_interface.h"
 
+#include "motor_base.h"   // MotorBase*, MotorBase::MotorCommandType
 #include "sensor_base.h"  // SensorBase*
 
 #include <amino.h>                     // for ach.h to compile
@@ -52,9 +53,10 @@
 #include <somatic/msg.h>  // somatic_anything_alloc(), somatic_anything_free()
 #include <stdio.h>        // std::cout
 #include <string.h>       // strdup()
+#include <time.h>         // clock_gettime()
 #include <cstring>        // std::memset, strcpy
 #include <string>         // std::string
-#include <vector>         //std::vector
+#include <vector>         // std::vector
 
 #include <ach.h>  // ach_status_t, ach_result_to_string, ach_flush(), ach_close()
 
@@ -71,6 +73,7 @@ void InterfaceContext::Init(char* interface_config_file) {
   somatic_verbprintf_prefix = daemon_opts_.ident;
   std::memset(&daemon_, 0, sizeof(daemon_));
   somatic_d_init(&daemon_, &daemon_opts_);
+  frequency_ = params.frequency_;
 
   // Send a "running" notice on the event channel
   somatic_d_event(&daemon_, SOMATIC__EVENT__PRIORITIES__NOTICE,
@@ -89,13 +92,18 @@ void InterfaceContext::ReadParams(char* interface_config_file,
     cfg->parse(interface_config_file);
 
     // Daemon identifier
-    params->daemon_identifier = cfg->lookupString(scope, "daemon_identifier");
-    std::cout << "daemon identifier: " << params->daemon_identifier
+    params->daemon_identifieri_ = cfg->lookupString(scope, "daemon_identifier");
+    std::cout << "daemon identifier: " << params->daemon_identifier_
               << std::endl;
 
     // Daemonize?
-    params->daemonize = lookupBoolean(scope, "daemonize");
-    std::cout << "daemonize: " << (daemonize ? "true" : "false") << std::endl;
+    params->daemonize_ = lookupBoolean(scope, "daemonize");
+    std::cout << "daemonize: " << (params->daemonize_ ? "true" : "false")
+              << std::endl;
+
+    // Refresh frequency (Hz)
+    params->frequency_ = lookupFloat(scope, "frequency");
+    std::cout << "frequency: " << params->frequency_ << std::endl;
 
   } catch (const config4cpp::ConfigurationException& ex) {
     std::cerr << ex.c_str() << std::endl;
@@ -155,6 +163,9 @@ SchunkMotorInterface::SchunkMotorInterface(
     std::string& motor_group_state_channel_name) {
   motor_vector_ptr_ = &motor_vector;
   daemon_ = &interface_context.daemon_;
+  wait_time_ = (struct timespec){
+      .tv_sec = 0,
+      .tv_nsec = (long int)((1.0 / interface_context.frequency_) * 1e9)};
 
   strcpy(name_, motor_group_name.c_str());
   n_ = motor_vector.size();
@@ -200,13 +211,120 @@ void MotorGroup::InitMessage() {
 }
 void SchunkMotorInterface::ReceiveCommand(
     MotorBase::MotorCommandType* command,
-    std::vector<double>* command_val_) override {}
+    std::vector<double>* command_val) override {
+  // The absolute time when receive should give up waiting
+  struct timespec currTime;
+  clock_gettime(CLOCK_MONOTONIC, &currTime);
+  struct timespec abstime = aa_tm_add(wait_time_, currTime);
 
-void SchunkMotorInterface::SendState() override {}
+  /// Read current state from state channel
+  ach_status_t r;
+  Somatic__MotorCmd* cmd =
+      SOMATIC_D_GET(&r, somatic__motor_cmd, daemon_, &cmd_chan_, &abstime,
+                    ACH_O_WAIT | ACH_O_LAST);
 
-void SchunkMotorInterface::Destroy() override {
-  std::cout << "destroy " << name_ << std::endl;
-  ach_close(&cmd_chan_);
-  ach_close(&state_chan_);
-  somatic_metadata_free(state_msg_.meta);
-}
+  // Check message reception
+  somatic_d_check(
+      daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
+      SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
+      ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) || ACH_TIMEOUT == r,
+      "ReceiveCommand", "motor group: %s, ach result: %s", name_,
+      ach_result_to_string(r));
+
+  // If the message has timed out, do nothing
+  if (r == ACH_TIMEOUT) {
+    *command = MotorBase::kDoNothing;
+    return;
+  }
+
+  // Validate the message
+  else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) {
+    // Check if the message has one of the expected parameters
+    int goodParam =
+        cmd->has_param && (SOMATIC__MOTOR_PARAM__MOTOR_POSITION == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_VELOCITY == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_CURRENT == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_HALT == cmd->param ||
+                           SOMATIC__MOTOR_PARAM__MOTOR_RESET == cmd->param);
+
+    // Check if the command has the right number of parameters if pos, vel or
+    // current
+    int goodValues = ((cmd->values && cmd->values->n_data == cx->n) ||
+                      SOMATIC__MOTOR_PARAM__MOTOR_HALT == cmd->param ||
+                      SOMATIC__MOTOR_PARAM__MOTOR_RESET == cmd->param);
+
+    // Use somatic interface to combine the finalize the checks in case there is
+    // an error
+    int somGoodParam = somatic_d_check_msg(
+        daemon_, goodParam, "motor_cmd",
+        "invalid motor param, set: %d, val: %d", cmd->has_param, cmd->param);
+    int somGoodValues = somatic_d_check_msg(daemon_, goodValues, "motor_cmd",
+                                            "wrong motor count: %d, wanted %d",
+                                            cmd->values->n_data, n_);
+
+    // If both good parameter and values, execute the command; otherwise just
+    // update the state
+    if (somGoodParam && somGoodValues) {
+      switch (cmd->param) {
+        case SOMATIC__MOTOR_PARAM__MOTOR_POSITION: {
+          *command = MotorBase::kPosition;
+          for (int i = 0; i < n_; i++) (*command_val)[i] = cmd->values->data[i];
+          break;
+        }
+        case SOMATIC__MOTOR_PARAM__MOTOR_VELOCITY: {
+          *command = MotorBase::kVelocity;
+          for (int i = 0; i < n_; i++) (*command_val)[i] = cmd->values->data[i];
+          break;
+        }
+        case SOMATIC__MOTOR_PARAM__MOTOR_CURRENT: {
+          *command = MotorBase::kCurrent;
+          for (int i = 0; i < n_; i++) (*command_val)[i] = cmd->values->data[i];
+          break;
+        }
+        case SOMATIC__MOTOR_PARAM__MOTOR_HALT: {
+          *command = MotorBase::kLock;
+          break;
+        }
+        case SOMATIC__MOTOR_PARAM__MOTOR_RESET: {
+          *command = MotorBase::kUnlock;
+          break;
+        }
+      }
+    } else {
+      *command = MotorBase::kDoNothing;
+    }
+  }
+
+  void SchunkMotorInterface::SendState() override {
+    // Read values of our group specified by joint_indices_ in the state_msg_
+    double pos_vals[n_], vel_vals[n_], cur_vals[n_];
+    for (int i = 0; i < n_; i++) {
+      pos_vals[i] = (*motor_vector_ptr_)[i]->GetPosition();
+      vel_vals[i] = (*motor_vector_ptr_)[i]->GetVelocity();
+      cur_vals[i] = (*motor_vector_ptr_)[i]->GetCurrent();
+    }
+    state_msg_.position->data = pos_vals;
+    state_msg_.velocity->data = vel_vals;
+    state_msg_.current->data = cur_vals;
+
+    // Status message (always good)
+    state_msg_.has_status = 1;
+    state_msg_.status = SOMATIC__MOTOR_STATUS__MOTOR_OK;
+
+    // Package a state message for the ack returned, and send to state channel
+    ach_status_t r =
+        SOMATIC_PACK_SEND(&state_chan_, somatic__motor_state, &state_msg_);
+
+    /// Check message transmission
+    somatic_d_check(daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
+                    SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT, ACH_OK == r,
+                    "SendState", "motor group: %s, ach result: %s", name_,
+                    ach_result_to_string(r));
+  }
+
+  void SchunkMotorInterface::Destroy() override {
+    std::cout << "destroy " << name_ << std::endl;
+    ach_close(&cmd_chan_);
+    ach_close(&state_chan_);
+    somatic_metadata_free(state_msg_.meta);
+  }
