@@ -49,6 +49,7 @@
 #include <amino.h>           // needed by ach.h
 #include <somatic.pb-c.h>    // Somatic__Vector, Somatic__MotorState
 #include <somatic/daemon.h>  // somatic_d_t, somatic_d_opts_t
+#include <time.h> // struct timespec
 
 #include <ach.h>  // ach_channel_t
 
@@ -62,10 +63,12 @@ class InterfaceContext {
   struct InterfaceContextParams {
     char daemon_identifier_[128];
     bool daemonize_;
+    double frequency_;
   };
   void ReadParams(char* interface_config_file, InterfaceContextParams* params);
   somatic_d_t daemon_;
   somatic_d_opts_t daemon_opts_;
+  double frequency_;
 }
 
 class SensorInterfaceBase {
@@ -117,6 +120,7 @@ class SchunkMotorInterface : public MotorInterfaceBase {
                           // from the motor
   char name_[128];
   somatic_d_t* daemon_;
+  struct timespec wait_time_;
   size_t n_;  // module count
   ach_channel_t cmd_chan_;
   ach_channel_t state_chan_;
