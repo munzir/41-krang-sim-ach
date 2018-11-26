@@ -294,37 +294,38 @@ void SchunkMotorInterface::ReceiveCommand(
       *command = MotorBase::kDoNothing;
     }
   }
+}
 
-  void SchunkMotorInterface::SendState() override {
-    // Read values of our group specified by joint_indices_ in the state_msg_
-    double pos_vals[n_], vel_vals[n_], cur_vals[n_];
-    for (int i = 0; i < n_; i++) {
-      pos_vals[i] = (*motor_vector_ptr_)[i]->GetPosition();
-      vel_vals[i] = (*motor_vector_ptr_)[i]->GetVelocity();
-      cur_vals[i] = (*motor_vector_ptr_)[i]->GetCurrent();
-    }
-    state_msg_.position->data = pos_vals;
-    state_msg_.velocity->data = vel_vals;
-    state_msg_.current->data = cur_vals;
-
-    // Status message (always good)
-    state_msg_.has_status = 1;
-    state_msg_.status = SOMATIC__MOTOR_STATUS__MOTOR_OK;
-
-    // Package a state message for the ack returned, and send to state channel
-    ach_status_t r =
-        SOMATIC_PACK_SEND(&state_chan_, somatic__motor_state, &state_msg_);
-
-    /// Check message transmission
-    somatic_d_check(daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
-                    SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT, ACH_OK == r,
-                    "SendState", "motor group: %s, ach result: %s", name_,
-                    ach_result_to_string(r));
+void SchunkMotorInterface::SendState() override {
+  // Read values of our group specified by joint_indices_ in the state_msg_
+  double pos_vals[n_], vel_vals[n_], cur_vals[n_];
+  for (int i = 0; i < n_; i++) {
+    pos_vals[i] = (*motor_vector_ptr_)[i]->GetPosition();
+    vel_vals[i] = (*motor_vector_ptr_)[i]->GetVelocity();
+    cur_vals[i] = (*motor_vector_ptr_)[i]->GetCurrent();
   }
+  state_msg_.position->data = pos_vals;
+  state_msg_.velocity->data = vel_vals;
+  state_msg_.current->data = cur_vals;
 
-  void SchunkMotorInterface::Destroy() override {
-    std::cout << "destroy " << name_ << std::endl;
-    ach_close(&cmd_chan_);
-    ach_close(&state_chan_);
-    somatic_metadata_free(state_msg_.meta);
-  }
+  // Status message (always good)
+  state_msg_.has_status = 1;
+  state_msg_.status = SOMATIC__MOTOR_STATUS__MOTOR_OK;
+
+  // Package a state message for the ack returned, and send to state channel
+  ach_status_t r =
+      SOMATIC_PACK_SEND(&state_chan_, somatic__motor_state, &state_msg_);
+
+  /// Check message transmission
+  somatic_d_check(daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
+                  SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT, ACH_OK == r,
+                  "SendState", "motor group: %s, ach result: %s", name_,
+                  ach_result_to_string(r));
+}
+
+void SchunkMotorInterface::Destroy() override {
+  std::cout << "destroy " << name_ << std::endl;
+  ach_close(&cmd_chan_);
+  ach_close(&state_chan_);
+  somatic_metadata_free(state_msg_.meta);
+}
