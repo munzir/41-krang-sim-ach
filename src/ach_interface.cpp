@@ -42,18 +42,18 @@
 
 #include "ach_interface.h"
 
-#include "motor_base.h"   // MotorBase*
-#include "motor_group.h"  // MotorGroup::MotorCommandType
+#include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
+#include "motor_base.h"   // MotorBase*, MotorGroup::MotorCommandType
 #include "sensor_base.h"  // SensorBase*
 
+#include <somatic.h>  // SOMATIC_PACK_SEND, has correct order of other includes
+
+#include <ach.h>  // ach_status_t, ach_result_to_string, ach_flush(), ach_close()
 #include <amino.h>                     // for ach.h to compile, aa_tm_add
 #include <config4cpp/Configuration.h>  // config4cpp::Configuration
-#include <somatic.h>                   // SOMATIC_PACK_SEND
 #include <somatic.pb-c.h>  // SOMATIC__: EVENT, MSG_TYPE; somatic__anything__init()
 #include <somatic/daemon.h>  // somatic_d: _init(), _event(), _channel_open(), _check(), SOMATIC_D_GET
 #include <somatic/msg.h>  // somatic_anything_alloc(), somatic_anything_free()
-
-#include <ach.h>  // ach_status_t, ach_result_to_string, ach_flush(), ach_close()
 
 #include <stdio.h>   // std::cout
 #include <string.h>  // strdup()
@@ -62,7 +62,7 @@
 #include <string>    // std::string
 #include <vector>    // std::vector
 
-void InterfaceContext::Init(char* interface_config_file) {
+InterfaceContext::InterfaceContext(const char* interface_config_file) {
   // Read the config file
   InterfaceContextParams params;
   ReadParams(interface_config_file, &params);
@@ -82,7 +82,7 @@ void InterfaceContext::Init(char* interface_config_file) {
                   SOMATIC__EVENT__CODES__PROC_RUNNING, NULL, NULL);
 }
 
-void InterfaceContext::ReadParams(char* interface_config_file,
+void InterfaceContext::ReadParams(const char* interface_config_file,
                                   InterfaceContextParams* params) {
   // Initialize the reader of the cfg file
   config4cpp::Configuration* cfg = config4cpp::Configuration::create();
@@ -94,17 +94,18 @@ void InterfaceContext::ReadParams(char* interface_config_file,
     cfg->parse(interface_config_file);
 
     // Daemon identifier
-    params->daemon_identifieri_ = cfg->lookupString(scope, "daemon_identifier");
+    strcpy(params->daemon_identifier_,
+           cfg->lookupString(scope, "daemon_identifier"));
     std::cout << "daemon identifier: " << params->daemon_identifier_
               << std::endl;
 
     // Daemonize?
-    params->daemonize_ = lookupBoolean(scope, "daemonize");
+    params->daemonize_ = cfg->lookupBoolean(scope, "daemonize");
     std::cout << "daemonize: " << (params->daemonize_ ? "true" : "false")
               << std::endl;
 
     // Refresh frequency (Hz)
-    params->frequency_ = lookupFloat(scope, "frequency");
+    params->frequency_ = cfg->lookupFloat(scope, "frequency");
     std::cout << "frequency: " << params->frequency_ << std::endl;
 
   } catch (const config4cpp::ConfigurationException& ex) {
@@ -130,7 +131,7 @@ void InterfaceContext::Destroy() {
 }
 
 FloatingBaseStateSensorInterface::FloatingBaseStateSensorInterface(
-    SensorBase* sensor, InterfaceContext& interface_context,
+    FloatingBaseStateSensor* sensor, InterfaceContext& interface_context,
     std::string& sensor_state_channel)
     : sensor_(sensor) {
   daemon_ = &interface_context.daemon_;
@@ -142,7 +143,7 @@ FloatingBaseStateSensorInterface::FloatingBaseStateSensorInterface(
   imu_msg_ = somatic_vector_alloc(6);
 }
 
-void FloatingBaseStateSensorInterface::SendState() override {
+void FloatingBaseStateSensorInterface::SendState() {
   imu_msg_->data[0] = sensor_->gravity_direction_.x_;
   imu_msg_->data[1] = sensor_->gravity_direction_.y_;
   imu_msg_->data[2] = sensor_->gravity_direction_.z_;
@@ -156,7 +157,7 @@ void FloatingBaseStateSensorInterface::SendState() override {
                   "SendState", "imu, ach result: %s", ach_result_to_string(r));
 }
 
-void FloatingBaseStateSensorInterface::Destroy() override {
+void FloatingBaseStateSensorInterface::Destroy() {
   // Clean up imu stuff
   ach_close(&imu_chan_);
   free(imu_msg_->data);
@@ -217,16 +218,15 @@ void SchunkMotorInterface::InitMessage() {
   state_msg_.meta->has_type = 1;
 }
 
-void SchunkMotorInterface::ReceiveCommand(
-    MotorGroup::MotorCommandType* command,
-    std::vector<double>* command_val) override {
+void SchunkMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
+                                          std::vector<double>* command_val) {
   // The absolute time when receive should give up waiting
   struct timespec currTime;
   clock_gettime(CLOCK_MONOTONIC, &currTime);
   struct timespec abstime = aa_tm_add(wait_time_, currTime);
 
   /// Read current state from state channel
-  ach_status_t r;
+  int r;
   Somatic__MotorCmd* cmd =
       SOMATIC_D_GET(&r, somatic__motor_cmd, daemon_, &cmd_chan_, &abstime,
                     ACH_O_WAIT | ACH_O_LAST);
@@ -237,7 +237,7 @@ void SchunkMotorInterface::ReceiveCommand(
       SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
       ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) || ACH_TIMEOUT == r,
       "ReceiveCommand", "motor group: %s, ach result: %s", name_,
-      ach_result_to_string(r));
+      ach_result_to_string((ach_status_t)r));
 
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
@@ -304,7 +304,7 @@ void SchunkMotorInterface::ReceiveCommand(
   }
 }
 
-void SchunkMotorInterface::SendState() override {
+void SchunkMotorInterface::SendState() {
   // Read values of our group specified by joint_indices_ in the state_msg_
   double pos_vals[n_], vel_vals[n_], cur_vals[n_];
   for (int i = 0; i < n_; i++) {
@@ -331,7 +331,7 @@ void SchunkMotorInterface::SendState() override {
                   ach_result_to_string(r));
 }
 
-void SchunkMotorInterface::Destroy() override {
+void SchunkMotorInterface::Destroy() {
   std::cout << "destroy " << name_ << std::endl;
   ach_close(&cmd_chan_);
   ach_close(&state_chan_);
@@ -392,16 +392,15 @@ void AmcMotorInterface::InitMessage() {
   state_msg_.meta->has_type = 1;
 }
 
-void AmcMotorInterface::ReceiveCommand(
-    MotorGroup::MotorCommandType* command,
-    std::vector<double>* command_val) override {
+void AmcMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
+                                       std::vector<double>* command_val) {
   // The absolute time when receive should give up waiting
   struct timespec currTime;
   clock_gettime(CLOCK_MONOTONIC, &currTime);
   struct timespec abstime = aa_tm_add(wait_time_, currTime);
 
   /// Read current state from state channel
-  ach_status_t r;
+  int r;
   Somatic__MotorCmd* cmd =
       SOMATIC_D_GET(&r, somatic__motor_cmd, daemon_, &cmd_chan_, &abstime,
                     ACH_O_WAIT | ACH_O_LAST);
@@ -412,7 +411,7 @@ void AmcMotorInterface::ReceiveCommand(
       SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
       ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) || ACH_TIMEOUT == r,
       "ReceiveCommand", "motor group: %s, ach result: %s", name_,
-      ach_result_to_string(r));
+      ach_result_to_string((ach_status_t)r));
 
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
@@ -455,7 +454,7 @@ void AmcMotorInterface::ReceiveCommand(
   }
 }
 
-void AmcMotorInterface::SendState() override {
+void AmcMotorInterface::SendState() {
   // Read values of our group specified by joint_indices_ in the state_msg_
   double pos_vals[n_], vel_vals[n_], cur_vals[n_];
   for (int i = 0; i < n_; i++) {
@@ -482,7 +481,7 @@ void AmcMotorInterface::SendState() override {
                   ach_result_to_string(r));
 }
 
-void AmcMotorInterface::Destroy() override {
+void AmcMotorInterface::Destroy() {
   std::cout << "destroy " << name_ << std::endl;
   ach_close(&cmd_chan_);
   ach_close(&state_chan_);
@@ -543,16 +542,15 @@ void WaistMotorInterface::InitMessage() {
   state_msg_.meta->has_type = 1;
 }
 
-void WaistMotorInterface::ReceiveCommand(
-    MotorGroup::MotorCommandType* command,
-    std::vector<double>* command_val) override {
+void WaistMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
+                                         std::vector<double>* command_val) {
   // The absolute time when receive should give up waiting
   struct timespec currTime;
   clock_gettime(CLOCK_MONOTONIC, &currTime);
   struct timespec abstime = aa_tm_add(wait_time_, currTime);
 
   /// Read current state from state channel
-  ach_status_t r;
+  int r;
   Somatic__MotorCmd* cmd =
       SOMATIC_D_GET(&r, somatic__motor_cmd, daemon_, &cmd_chan_, &abstime,
                     ACH_O_WAIT | ACH_O_LAST);
@@ -563,7 +561,7 @@ void WaistMotorInterface::ReceiveCommand(
       SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
       ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) || ACH_TIMEOUT == r,
       "ReceiveCommand", "motor group: %s, ach result: %s", name_,
-      ach_result_to_string(r));
+      ach_result_to_string((ach_status_t)r));
 
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
@@ -619,7 +617,7 @@ void WaistMotorInterface::ReceiveCommand(
   }
 }
 
-void WaistMotorInterface::SendState() override {
+void WaistMotorInterface::SendState() {
   // Read values of our group specified by joint_indices_ in the state_msg_
   double pos_vals[2 * n_], vel_vals[2 * n_], cur_vals[2 * n_];
   for (int i = 0; i < n_; i++) {
@@ -649,7 +647,7 @@ void WaistMotorInterface::SendState() override {
                   ach_result_to_string(r));
 }
 
-void WaistMotorInterface::Destroy() override {
+void WaistMotorInterface::Destroy() {
   std::cout << "destroy " << name_ << std::endl;
   ach_close(&cmd_chan_);
   ach_close(&state_chan_);
@@ -660,9 +658,10 @@ SensorInterfaceBase* interface::Create(SensorBase* sensor,
                                        InterfaceContext& interface_context,
                                        std::string& sensor_name,
                                        std::string& sensor_state_channel) {
-  if(!sensor_name.compare("floating-base-state") {
-    return new FloatingBaseStateSensorInterface(sensor, interface_context,
-                                                sensor_state_channel);
+  if (!sensor_name.compare("floating-base-state")) {
+    return new FloatingBaseStateSensorInterface(
+        (FloatingBaseStateSensor*)sensor, interface_context,
+        sensor_state_channel);
   } else {
     assert(false && "Error creating interface. Type doesn't exist");
   }
@@ -673,7 +672,7 @@ MotorInterfaceBase* interface::Create(
     std::string& motor_group_name,
     std::string& motor_group_command_channel_name,
     std::string& motor_group_state_channel_name) {
-  std::string motor_type = motor_vector[0].GetMotorType();
+  std::string motor_type = motor_vector[0]->GetMotorType();
   if (!motor_type.compare("schunk")) {
     return new SchunkMotorInterface(
         motor_vector, interface_context, motor_group_name,

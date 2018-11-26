@@ -44,8 +44,8 @@
 #ifndef KRANG_SIMULATION_LOAD_OBJECTS_H_
 #define KRANG_SIMULATION_LOAD_OBJECTS_H_
 
-#include <Eigen/Eigen> // Eigen::
-#include <dart/dart.hpp> // dart::simulation, dart::dynamics
+#include <Eigen/Eigen>    // Eigen::
+#include <dart/dart.hpp>  // dart::simulation, dart::dynamics
 
 struct KrangInitPoseParams {
   // Initial pose parameters
@@ -103,14 +103,15 @@ dart::dynamics::SkeletonPtr CreateFloor();
 
 //==============================================================================
 //// Create Krang with desired init pose, CoM parameters and joint limits
-dart::dynamics::SkeletonPtr CreateKrang(const DartParams& params);
+dart::dynamics::SkeletonPtr CreateKrang(DartParams& params);
 
 //==============================================================================
 //// Set CoM parameters on the robot. These params were learnt through
 //// data collection in various poses of the robot
 // TODO: This CoM params file should list the parameters with names of the links
 // Those names should then be used to set these parameters
-void SetKrangComParams(char* com_params_path, robot);
+void SetKrangComParams(const char* com_params_path,
+                       dart::dynamics::SkeletonPtr robot);
 
 //==============================================================================
 // Given all the initial pose parameters, sets the positions of krang

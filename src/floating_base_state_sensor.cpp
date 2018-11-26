@@ -43,7 +43,7 @@
 
 #include "floating_base_state_sensor.h"
 
-FloatingBaseStateSensor::Update() {
+void FloatingBaseStateSensor::Update() {
   // We define a frame of reference "imu". Origin on the center of the physical
   // imu, x, y and z axes along the -y, +z and -x axes of the physical imu
   // (labeled). Henceforth x_imu, y_imu and z_imu refer to the axes of frame
@@ -89,7 +89,7 @@ FloatingBaseStateSensor::Update() {
   gravity_direction_.x_ = gravity_direction_wrt_imu(0);
   gravity_direction_.y_ = gravity_direction_wrt_imu(1);
   gravity_direction_.z_ = gravity_direction_wrt_imu(2);
-  angular_velocity_.x_ = angular_velocity_wrt_imu(0);
-  angular_velocity_.y_ = angular_velocity_wrt_imu(1);
-  angular_velocity_.z_ = angular_velocity_wrt_imu(2);
+  angular_velocity_.x_ = base_ang_vel_wrt_imu(0);
+  angular_velocity_.y_ = base_ang_vel_wrt_imu(1);
+  angular_velocity_.z_ = base_ang_vel_wrt_imu(2);
 }

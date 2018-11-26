@@ -34,53 +34,35 @@
  */
 
 /**
- * @file robot_control_interface.h
+ * @file amc_motor.h
  * @author Munzir Zafar
- * @date Nov 23, 2018
- * @brief Header for RobotControlInterface class that is a composite of
- * MotorGroup and SensorGroup objects to allow external interface to access
- * robot states and control robot actuators
+ * @date Nov 26, 2018
+ * @brief Amc Motor simulation
  */
 
-#ifndef KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_
-#define KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_
+#ifndef KRANG_SIMULATION_AMC_MOTOR_H_
+#define KRANG_SIMULATION_AMC_MOTOR_H_
 
-#include <dart/dart.hpp>  // dart::dynamics
+#include "motor_base.h"
+
+#include <dart/dart.hpp>  // dart::dynamics::
 #include <string>         // std::string
-#include <vector>         // std::vector
 
-#include "ach_interface.h"  // InterfaceContext
-#include "motor_group.h"    // MotorGroupBase
-#include "sensor_group.h"   // SensorGroupBase
-
-class RobotControlInterface {
+class AmcMotor : public MotorBase {
  public:
-  RobotControlInterface(dart::dynamics::SkeletonPtr robot,
-                        const char* motor_config_file,
-                        const char* interface_config_file);
-  void Destroy();
-  ~RobotControlInterface() { Destroy(); }
-
-  void Run();
-
- private:
-  struct RobotControlInterfaceParams {
-    int num_motor_groups_;
-    std::vector<std::string> motor_group_names_;
-    std::vector<std::vector<std::string>> motor_group_joints_;
-    std::vector<std::string> motor_group_command_channel_names_;
-    std::vector<std::string> motor_group_state_channel_names_;
-    int num_sensor_groups_;
-    std::vector<std::string> sensor_group_names_;
-    std::vector<std::string> sensor_group_state_channel_names_;
-  };
-
-  void ReadParams(const char* interface_config_file,
-                  RobotControlInterfaceParams* params);
-  InterfaceContext interface_context_;
-  std::vector<MotorGroup*> motor_groups_;
-  std::vector<SensorGroup*> sensor_groups_;
+  AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
+           const char* motor_config_file);
+  ~AmcMotor() { Destroy(); }
+  void Update() override;
+  void Destroy() override;
+  void Lock() override;
+  void Unlock() override;
+  void PositionCmd(double val) override;
+  void VelocityCmd(double val) override;
+  void CurrentCmd(double val) override;
+  double GetPosition() override;
+  double GetVelocity() override;
+  double GetCurrent() override;
+  std::string GetMotorType() override;
 };
-
-#endif  // KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_
-
+#endif  // KRANG_SIMULATION_AMC_MOTOR_H_

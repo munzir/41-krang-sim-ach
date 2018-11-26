@@ -49,22 +49,31 @@
 
 class MotorBase {
  public:
-  virtual void Update();
-  virtual void Destroy();
-  virtual void Lock();
-  virtual void Unlock();
-  virtual void PositionCmd(double val);
-  virtual void VelocityCmd(double val);
-  virtual void CurrentCmd(double val);
-  virtual void GetPosition();
-  virtual void GetVelocity();
-  virtual void GetCurrent();
-  virtual void GetMotorType();
-}
+  enum MotorCommandType {
+    kLock = 0,
+    kPosition,
+    kVelocity,
+    kCurrent,
+    kUnlock,
+    kDoNothing
+  };
+  MotorBase() {}
+  ~MotorBase() {}
+  virtual void Update() = 0;
+  virtual void Destroy() = 0;
+  virtual void Lock() = 0;
+  virtual void Unlock() = 0;
+  virtual void PositionCmd(double val) = 0;
+  virtual void VelocityCmd(double val) = 0;
+  virtual void CurrentCmd(double val) = 0;
+  virtual double GetPosition() = 0;
+  virtual double GetVelocity() = 0;
+  virtual double GetCurrent() = 0;
+  virtual std::string GetMotorType() = 0;
+};
 
 namespace motor {
-  MotorBase* Create(dart::dynamics::SkeletonPtr robot,
-                    std::vector<std::string> & joint_name,
-                    char* motor_config_file);
+MotorBase* Create(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
+                  const char* motor_config_file);
 }
 #endif  // KRANG_SIMULATION_MOTOR_BASE_H_

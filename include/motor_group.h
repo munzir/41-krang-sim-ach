@@ -45,28 +45,18 @@
 #define KRANG_SIMULATION_MOTOR_GROUP_H_
 
 #include "ach_interface.h"  // InterfaceContext, SchunkMotorInterface, AmcMotorInterface
-#include "motor_base.h"          // MotorBase::, SchunkMotor, AmcMotor
+#include "motor_base.h"  // MotorBase::, SchunkMotor, AmcMotor
 
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
 #include <vector>         // std::vector
 
-
 class MotorGroup {
  public:
-  enum MotorCommandType {
-    kLock = 0,
-    kPosition,
-    kVelocity,
-    kCurrent,
-    kUnlock,
-    kDoNothing
-  };
   MotorGroup(dart::dynamics::SkeletonPtr robot,
-             InterfaceContext& interface_context,
-             string::string& motor_group_name,
+             InterfaceContext& interface_context, std::string& motor_group_name,
              std::vector<std::string>& motor_group_joints,
-             const* motor_config_file,
+             const char* motor_config_file,
              std::string& motor_group_command_channel_name,
              std::string& motor_group_state_channel_name);
 
@@ -74,7 +64,8 @@ class MotorGroup {
 
   void Update();
 
-  void Execute(MotorCommandType& command, std::vector<double>& command_val);
+  void Execute(MotorBase::MotorCommandType& command,
+               std::vector<double>& command_val);
 
   void Run();
 
@@ -84,7 +75,7 @@ class MotorGroup {
   std::vector<MotorBase*> motor_vector_;
   MotorInterfaceBase* interface_;
 
-  MotorCommandType command_;
+  MotorBase::MotorCommandType command_;
   std::vector<double> command_val_;
-}
+};
 #endif  // KRANG_SIMULATION_MOTOR_GROUP_H_

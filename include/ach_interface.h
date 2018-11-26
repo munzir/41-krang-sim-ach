@@ -43,15 +43,16 @@
 #ifndef KRANG_SIMULATION_ACH_INTERFACE_H_
 #define KRANG_SIMULATION_ACH_INTERFACE_H_
 
-#include "motor_base.h"   // MotorBase*
-#include "motor_group.h"  // MotorGroup::MotorCommandType,
+#include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
+#include "motor_base.h"   // MotorBase*, MotorBase::MotorCommandType,
 #include "sensor_base.h"  // SensorBase*
 
+#include <somatic.h>  // has correct order of other includes
+
+#include <ach.h>             // ach_channel_t
 #include <amino.h>           // needed by ach.h
 #include <somatic.pb-c.h>    // Somatic__Vector, Somatic__MotorState
 #include <somatic/daemon.h>  // somatic_d_t, somatic_d_opts_t
-
-#include <ach.h>  // ach_channel_t
 
 #include <time.h>  // struct timespec
 #include <string>  // std::string
@@ -59,7 +60,8 @@
 
 class InterfaceContext {
  public:
-  void Init(const char* interface_config_file);
+  InterfaceContext(const char* interface_config_file);
+  ~InterfaceContext() { Destroy(); }
   void Run();
   void Destroy();
   struct InterfaceContextParams {
@@ -67,41 +69,47 @@ class InterfaceContext {
     bool daemonize_;
     double frequency_;
   };
-  void ReadParams(char* interface_config_file, InterfaceContextParams* params);
+  void ReadParams(const char* interface_config_file,
+                  InterfaceContextParams* params);
   somatic_d_t daemon_;
   somatic_d_opts_t daemon_opts_;
   double frequency_;
-}
+};
 
 class SensorInterfaceBase {
  public:
-  virtual void SendState();
-  virtual void Destroy();
-}
+  SensorInterfaceBase() {};
+  ~SensorInterfaceBase() {};
+  virtual void SendState() = 0;
+  virtual void Destroy() = 0;
+};
 
 class MotorInterfaceBase {
  public:
-  virtual void ReceiveCommand(MotorGroup::MotorCommandType* command,
-                              std::vector<double>* command_val_);
-  virtual void SendState();
-  virtual void Destroy();
-}
+  MotorInterfaceBase() {};
+  ~MotorInterfaceBase() {};
+  virtual void ReceiveCommand(MotorBase::MotorCommandType* command,
+                              std::vector<double>* command_val_) = 0;
+  virtual void SendState() = 0;
+  virtual void Destroy() = 0;
+};
 
 class FloatingBaseStateSensorInterface : public SensorInterfaceBase {
  public:
-  FloatingBaseStateSensorInterface(SensorBase* sensor,
+  FloatingBaseStateSensorInterface(FloatingBaseStateSensor* sensor,
                                    InterfaceContext& interface_context,
                                    std::string& sensor_state_channel);
   ~FloatingBaseStateSensorInterface() { Destroy(); }
   void SendState() override;
   void Destroy() override;
 
-  const SensorBase* sensor_;  // const because interface should only be able to
-                              // read the sensor, not modify it
+  const FloatingBaseStateSensor*
+      sensor_;  // const because interface should only be able to
+                // read the sensor, not modify it
   ach_channel_t imu_chan_;
   Somatic__Vector* imu_msg_;
   somatic_d_t* daemon_;
-}
+};
 
 class SchunkMotorInterface : public MotorInterfaceBase {
  public:
@@ -111,7 +119,7 @@ class SchunkMotorInterface : public MotorInterfaceBase {
                        std::string& motor_group_command_channel_name,
                        std::string& motor_group_state_channel_name);
   ~SchunkMotorInterface() { Destroy(); }
-  void ReceiveCommand(MotorGroup::MotorCommandType* command,
+  void ReceiveCommand(MotorBase::MotorCommandType* command,
                       std::vector<double>* command_val_) override;
   void SendState() override;
   void Destroy() override;
@@ -132,7 +140,7 @@ class SchunkMotorInterface : public MotorInterfaceBase {
     Somatic__Vector velocity_;
     Somatic__Vector current_;
   } state_msg_fields_;
-}
+};
 
 class AmcMotorInterface : public MotorInterfaceBase {
  public:
@@ -142,7 +150,7 @@ class AmcMotorInterface : public MotorInterfaceBase {
                     std::string& motor_group_command_channel_name,
                     std::string& motor_group_state_channel_name);
   ~AmcMotorInterface() { Destroy(); }
-  void ReceiveCommand(MotorGroup::MotorCommandType* command,
+  void ReceiveCommand(MotorBase::MotorCommandType* command,
                       std::vector<double>* command_val_) override;
   void SendState() override;
   void Destroy() override;
@@ -163,8 +171,7 @@ class AmcMotorInterface : public MotorInterfaceBase {
     Somatic__Vector velocity_;
     Somatic__Vector current_;
   } state_msg_fields_;
-
-}
+};
 
 class WaistMotorInterface : public MotorInterfaceBase {
  public:
@@ -174,7 +181,7 @@ class WaistMotorInterface : public MotorInterfaceBase {
                       std::string& motor_group_command_channel_name,
                       std::string& motor_group_state_channel_name);
   ~WaistMotorInterface() { Destroy(); }
-  void ReceiveCommand(MotorGroup::MotorCommandType* command,
+  void ReceiveCommand(MotorBase::MotorCommandType* command,
                       std::vector<double>* command_val_) override;
   void SendState() override;
   void Destroy() override;
@@ -195,18 +202,18 @@ class WaistMotorInterface : public MotorInterfaceBase {
     Somatic__Vector velocity_;
     Somatic__Vector current_;
   } state_msg_fields_;
-
-}
+};
 
 namespace interface {
-  SensorInterfaceBase* Create(
-      SensorBase * sensor, InterfaceContext & interface_context,
-      std::string & sensor_name, std::string & sensor_state_channel);
+SensorInterfaceBase* Create(SensorBase* sensor,
+                            InterfaceContext& interface_context,
+                            std::string& sensor_name,
+                            std::string& sensor_state_channel);
 
-  MotorInterfaceBase* Create(std::vector<MotorBase*> & motor_vector,
-                             InterfaceContext & interface_context,
-                             std::string & motor_group_name,
-                             std::string & motor_group_command_channel_name,
-                             std::string & motor_group_state_channel_name);
-}
+MotorInterfaceBase* Create(std::vector<MotorBase*>& motor_vector,
+                           InterfaceContext& interface_context,
+                           std::string& motor_group_name,
+                           std::string& motor_group_command_channel_name,
+                           std::string& motor_group_state_channel_name);
+}  // namespace interface
 #endif  // KRANG_SIMULATION_ACH_INTERFACE_H_

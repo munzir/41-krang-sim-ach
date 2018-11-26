@@ -34,49 +34,35 @@
  */
 
 /**
- * @file ach_utils.h
+ * @file schunk_motor.h
  * @author Munzir Zafar
- * @date Nov 15, 2018
- * @brief Header for ach_utils.cpp that uses MotorGroup class to perform ach
- * communication of krang
+ * @date Nov 26, 2018
+ * @brief Schunk Motor simulation
  */
 
-#ifndef KRANG_SIMULATION_KRANG_ACH_H_
-#define KRANG_SIMULATION_KRANG_ACH_H_
+#ifndef KRANG_SIMULATION_SCHUNK_MOTOR_H_
+#define KRANG_SIMULATION_SCHUNK_MOTOR_H_
 
-#include <memory>
+#include "motor_base.h"
 
-#include <somatic.h>
+#include <dart/dart.hpp>  // dart::dynamics::
+#include <string>         // std::string
 
-#include "motor.h"
-#include "sim_config.h"
-
-class KrangAch {
+class SchunkMotor : public MotorBase {
  public:
-  KrangAch(SimConfig& params);
-  ~KrangAch(){};
-
-  // Since special cleaning up is needed and glutMainLoop exits abruptly by
-  // calling exit(0) that does not call destructors, the cleaning that could
-  // elegantly be done in the destructor has to be explicitly performed now in a
-  // separate Destroy() function that the user needs to call in an ExitFunction
-  // that can be specified to be executed via atexit(ExitFunction)
-  void Destroy();
-
-  void SendState(const Eigen::VectorXd& all_pos, const Eigen::VectorXd& all_vel,
-                 const Eigen::VectorXd& all_cur,
-                 const Eigen::Matrix<double, 6, 1>& imu_data);
-
-  // For somatic daemon management
-  somatic_d_t daemon_;
-  somatic_d_opts_t daemon_opts_;
-
-  // MotorGroups for ach communication
-  MotorGroup *wheels_, *waist_, *torso_, *left_arm_, *right_arm_;
-
-  // Imu data ach communication
-  ach_channel_t imu_chan_;
-  Somatic__Vector* imu_msg_;
+  SchunkMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
+              const char* motor_config_file);
+  ~SchunkMotor() { Destroy(); }
+  void Update() override;
+  void Destroy() override;
+  void Lock() override;
+  void Unlock() override;
+  void PositionCmd(double val) override;
+  void VelocityCmd(double val) override;
+  void CurrentCmd(double val) override;
+  double GetPosition() override;
+  double GetVelocity() override;
+  double GetCurrent() override;
+  std::string GetMotorType() override;
 };
-
-#endif  // KRANG_SIMULATION_KRANG_ACH_H_
+#endif  // KRANG_SIMULATION_SCHUNK_MOTOR_H_

@@ -58,7 +58,7 @@ SensorGroup::SensorGroup(dart::dynamics::SkeletonPtr robot,
 }
 
 void SensorGroup::Run() {
-  sensor_.Update();
+  sensor_->Update();
   interface_->SendState();
 }
 

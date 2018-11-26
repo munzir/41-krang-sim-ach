@@ -66,6 +66,6 @@ class SensorGroup {
  private:
   SensorBase* sensor_;
   SensorInterfaceBase* interface_;
-}
+};
 
 #endif  // KRANG_SIMULATION_SENSOR_GROUP_H_

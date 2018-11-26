@@ -54,8 +54,8 @@
 #include <vector>                      // std::vector
 
 MotorBase* motor::Create(dart::dynamics::SkeletonPtr robot,
-                         std::vector<std::string>& joint_name,
-                         char* motor_config_file) {
+                         std::string& joint_name,
+                         const char* motor_config_file) {
   // Get the motor brand name (or make) from the motor_config_file
   std::string motor_name;
   config4cpp::Configuration* cfg = config4cpp::Configuration::create();
