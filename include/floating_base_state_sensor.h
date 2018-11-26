@@ -46,7 +46,7 @@
 
 #include <dart/dart.hpp> // dart::dynamics::
 
-#include "sensor.h"
+#include "sensor_base.h"
 
 class FloatingBaseStateSensor : public SensorBase {
  public:
@@ -74,6 +74,6 @@ class FloatingBaseStateSensor : public SensorBase {
   Vector gravity_direction_;
   // base link's angular velocity
   Vector angular_velocity_;
-}
+};
 
 #endif  // KRANG_SIMULATION_FLOATING_BASE_STATE_SENSOR_H_

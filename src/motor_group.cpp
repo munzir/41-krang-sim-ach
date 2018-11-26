@@ -52,9 +52,9 @@
 
 MotorGroup::MotorGroup(dart::dynamics::SkeletonPtr robot,
                        InterfaceContext& interface_context,
-                       string::string& motor_group_name,
+                       std::string& motor_group_name,
                        std::vector<std::string>& motor_group_joints,
-                       const* motor_config_file,
+                       const char* motor_config_file,
                        std::string& motor_group_command_channel_name,
                        std::string& motor_group_state_channel_name) {
   for (int i = 0; i < motor_group_joints.size(); i++) {
@@ -71,33 +71,33 @@ void MotorGroup::Update() {
   for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Update();
 }
 
-void MotorGroup::Execute(MotorCommandType& command,
+void MotorGroup::Execute(MotorBase::MotorCommandType& command,
                          std::vector<double>& command_val) {
   switch (command) {
-    case kLock: {
+    case MotorBase::kLock: {
       for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Lock();
       break;
     }
-    case kUnlock: {
+    case MotorBase::kUnlock: {
       for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Unlock();
       break;
     }
-    case kPosition: {
+    case MotorBase::kPosition: {
       for (int i = 0; i < motor_vector_.size(); i++)
-        motor_vector_[i]->PositionCmd(command_vals[i]);
+        motor_vector_[i]->PositionCmd(command_val[i]);
       break;
     }
-    case kVelocity: {
+    case MotorBase::kVelocity: {
       for (int i = 0; i < motor_vector_.size(); i++)
-        motor_vector_[i]->VelocityCmd(command_vals[i]);
+        motor_vector_[i]->VelocityCmd(command_val[i]);
       break;
     }
-    case kCurrent: {
+    case MotorBase::kCurrent: {
       for (int i = 0; i < motor_vector_.size(); i++)
-        motor_vector_[i]->CurrentCmd(command_vals[i]);
+        motor_vector_[i]->CurrentCmd(command_val[i]);
       break;
     }
-    case kDoNothing: {
+    case MotorBase::kDoNothing: {
       break;
     }
   }
@@ -106,7 +106,7 @@ void MotorGroup::Execute(MotorCommandType& command,
 void MotorGroup::Run() {
   // Receive and execute command
   interface_->ReceiveCommand(&command_, &command_val_);
-  if (command_ != kDoNothing) {
+  if (command_ != MotorBase::kDoNothing) {
     Execute(command_, command_val_);
   }
 

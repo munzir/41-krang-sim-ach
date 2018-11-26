@@ -48,11 +48,11 @@
 
 class SensorBase {
  public:
-  SensorBase();
-  ~SensorBase();
-  virtual void Update();
-  virtual void Destroy();
-}
+  SensorBase() {};
+  ~SensorBase() {};
+  virtual void Update() = 0;
+  virtual void Destroy() = 0;
+};
 
 namespace sensor {
   SensorBase* Create(dart::dynamics::SkeletonPtr robot,

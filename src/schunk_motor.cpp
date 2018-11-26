@@ -34,55 +34,27 @@
  */
 
 /**
- * @file motor.h
+ * @file schunk_motor.cpp
  * @author Munzir Zafar
- * @date Nov 15, 2018
- * @brief Header for motor.cpp that handles ach communication for a specific
- * motor group
+ * @date Nov 26, 2018
+ * @brief Schunk Motor simulation
  */
 
-#ifndef KRANG_SIMULATION_MOTOR_H_
-#define KRANG_SIMULATION_MOTOR_H_
+#include "schunk_motor.h"
 
-#include <vector>
+#include <dart/dart.hpp>  // dart::dynamics::
+#include <string>         // std::string
 
-#include <somatic.h>
-#include <somatic.pb-c.h>
-#include <somatic/daemon.h>
-#include <Eigen/Eigen>
-
-#include <ach.h>
-
-class MotorGroup {
- public:
-  MotorGroup(const char* name, somatic_d_t* daemon, const char* cmd_chan_name,
-             const char* state_chan_name, const std::vector<int>& joint_indices,
-             const std::vector<double>& sign = std::vector<double>());
-  ~MotorGroup();
-
-  void SendState(const Eigen::VectorXd& all_pos, const Eigen::VectorXd& all_vel,
-                 const Eigen::VectorXd& all_cur);
-
-  Somatic__MotorCmd* ReceiveCommand();
-
-  Eigen::VectorXd ExecuteCommand(Somatic__MotorCmd* cmd);
-
- private:
-  void InitMessage();
-
-  char name_[128];
-  somatic_d_t* daemon_;
-  size_t n_;  // module count
-  ach_channel_t cmd_chan_;
-  ach_channel_t state_chan_;
-  std::vector<int> joint_indices_;
-  std::vector<double> sign_;
-  Somatic__MotorState state_msg_;
-  struct {
-    Somatic__Vector position_;
-    Somatic__Vector velocity_;
-    Somatic__Vector current_;
-  } state_msg_fields_;
-};
-
-#endif  // KRANG_SIMULATION_MOTOR_H_
+SchunkMotor::SchunkMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
+            const char* motor_config_file) {}
+void SchunkMotor::Update() {}
+void SchunkMotor::Destroy() {}
+void SchunkMotor::Lock() {}
+void SchunkMotor::Unlock() {}
+void SchunkMotor::PositionCmd(double val) {}
+void SchunkMotor::VelocityCmd(double val) {}
+void SchunkMotor::CurrentCmd(double val) {}
+double SchunkMotor::GetPosition() { return 0.0;}
+double SchunkMotor::GetVelocity() {return 0.0;}
+double SchunkMotor::GetCurrent() {return 0.0;}
+std::string SchunkMotor::GetMotorType() { return "schunk"; }

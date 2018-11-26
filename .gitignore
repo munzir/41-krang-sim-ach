@@ -44,6 +44,9 @@
 !/include/motor_base.h
 !/include/floating_base_state_sensor.h
 !/include/ach_interface.h
+!/include/schunk_motor.h
+!/include/amc_motor.h
+!/include/waist_motor.h
 
 # src
 !/src/
@@ -60,6 +63,9 @@
 !/src/motor_group.cpp
 !/src/sensor_base.cpp
 !/src/motor_base.cpp
+!/src/schunk_motor.cpp
+!/src/amc_motor.cpp
+!/src/waist_motor.cpp
 
 # exe
 !/exe/

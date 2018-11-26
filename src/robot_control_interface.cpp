@@ -56,18 +56,18 @@
 #include "sensor_group.h"  // FindSensorType, SensorGroup()
 
 RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
-                                             char* motor_config_file,
-                                             char* interface_config_file)
+                                             const char* motor_config_file,
+                                             const char* interface_config_file)
     : interface_context_(interface_config_file) {
   RobotControlInterfaceParams params;
   ReadParams(interface_config_file, &params);
 
-  for (int i = 0; i < params.num_sensor_gorups; i++) {
+  for (int i = 0; i < params.num_sensor_groups_; i++) {
     sensor_groups_.push_back(new SensorGroup(
         robot, interface_context_, params.sensor_group_names_[i],
         params.sensor_group_state_channel_names_[i]));
   }
-  for (int i = 0; i < params.num_motor_groups; i++) {
+  for (int i = 0; i < params.num_motor_groups_; i++) {
     motor_groups_.push_back(
         new MotorGroup(robot, interface_context_, params.motor_group_names_[i],
                        params.motor_group_joints_[i], motor_config_file,
@@ -75,8 +75,8 @@ RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
                        params.motor_group_state_channel_names_[i]));
   }
 }
-RobotControlInterface::ReadParams(char* interface_config_file_,
-                                  RobotControlInterface* params) {
+void RobotControlInterface::ReadParams(const char* interface_config_file,
+                                       RobotControlInterfaceParams* params) {
   // Initialize the reader of the cfg file
   config4cpp::Configuration* cfg = config4cpp::Configuration::create();
   const char* scope = "";
@@ -84,12 +84,12 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
   std::cout << "Reading robot control interface parameters ..." << std::endl;
   try {
     // Parse the cfg file
-    cfg->parse(config_file);
+    cfg->parse(interface_config_file);
 
     params->num_motor_groups_ = cfg->lookupFloat(scope, "num_motor_groups");
     std::cout << "num_motor_groups: " << params->num_motor_groups_ << std::endl;
 
-    std::stringstream ss;
+    std::stringstream ss1;
     for (int i = 0; i < params->num_motor_groups_; i++) {
       // Construct strings to lookup in the cfg file
       ss1 << "motor_group" << i + 1;
@@ -112,10 +112,10 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
       std::istream_iterator<std::string> end;
       params->motor_group_joints_.push_back(
           std::vector<std::string>(begin, end));
-
-      params->motor_group_joints_.push_back(std::string());
-      std::cout << motor_group_joints_str << ": "
-                << params->motor_group_joints_[i];
+      std::cout << motor_group_joints_str << ": ";
+      for(int j = 0; j < params->motor_group_joints_[i].size(); j++)
+        std::cout << params->motor_group_joints_[i][j] << " ";
+      std::cout << std::endl;
 
       // Lookup command channel name for the motor group
       params->motor_group_command_channel_names_.push_back(std::string(
@@ -134,14 +134,14 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
     }
     for (int i = 0; i < params->num_sensor_groups_; i++) {
       // Construct strings to lookup in the cfg file
-      ss << "sensor_group" << i + 1;
-      std::string sensor_group_str = ss.str();
-      std::string sensor_group_state_chan_str = sensor_group + "_state_chan";
+      ss1 << "sensor_group" << i + 1;
+      std::string sensor_group_str = ss1.str();
+      std::string sensor_group_state_chan_str = sensor_group_str + "_state_chan";
 
       // Lookup sensor group name
       params->sensor_group_names_.push_back(
           std::string(cfg->lookupString(scope, sensor_group_str.c_str())));
-      std::cout << sensor_group_str << ": " << params->sensor_group_joints_[i];
+      std::cout << sensor_group_str << ": " << params->sensor_group_names_[i];
 
       // Lookup state channel name for the sensor group
       params->sensor_group_state_channel_names_.push_back(std::string(
@@ -149,7 +149,7 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
       std::cout << sensor_group_state_chan_str << ": "
                 << params->sensor_group_state_channel_names_[i];
 
-      ss.clear();
+      ss1.clear();
     }
   } catch (const config4cpp::ConfigurationException& ex) {
     std::cerr << ex.c_str() << std::endl;
@@ -158,12 +158,12 @@ RobotControlInterface::ReadParams(char* interface_config_file_,
   }
   std::cout << std::endl;
 }
-RobotControlInterface::Destroy() {
+void RobotControlInterface::Destroy() {
   for (int i = 0; i < motor_groups_.size(); i++) {
     motor_groups_[i]->Destroy();
     delete motor_groups_[i];
   }
-  motor_group_.clear();
+  motor_groups_.clear();
   for (int i = 0; i < sensor_groups_.size(); i++) {
     sensor_groups_[i]->Destroy();
     delete sensor_groups_[i];
@@ -171,7 +171,7 @@ RobotControlInterface::Destroy() {
   sensor_groups_.clear();
   interface_context_.Destroy();
 }
-RobotControlInterface::Run() {
+void RobotControlInterface::Run() {
   for (int i = 0; i < motor_groups_.size(); i++) motor_groups_[i]->Run();
   for (int i = 0; i < sensor_groups_.size(); i++) sensor_groups_[i]->Run();
   interface_context_.Run();

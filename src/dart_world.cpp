@@ -263,7 +263,7 @@ dart::dynamics::SkeletonPtr CreateFloor() {
 
 //==============================================================================
 //// Create Krang with desired init pose, CoM parameters and joint limits
-dart::dynamics::SkeletonPtr CreateKrang(const DartParams& params) {
+dart::dynamics::SkeletonPtr CreateKrang(DartParams& params) {
   // Load the Skeleton from a file
   dart::utils::DartLoader loader;
   dart::dynamics::SkeletonPtr krang;
@@ -279,12 +279,12 @@ dart::dynamics::SkeletonPtr CreateKrang(const DartParams& params) {
   // If balanced init pose is required
   if (params.init_pose_params.init_with_balance_pose) {
     Eigen::Vector3d COM;
-    COM = krang->getCOM() - params.xyz_init;
+    COM = krang->getCOM() - params.init_pose_params.xyz_init;
     double th = atan2(COM(0), COM(2));
 
     // Adjust q_base_init to bring COM on top of wheels and set the positions
     // again
-    params.q_base_init -= th;
+    params.init_pose_params.q_base_init -= th;
     SetKrangInitPos(params.init_pose_params, krang);
   }
 
@@ -304,7 +304,8 @@ dart::dynamics::SkeletonPtr CreateKrang(const DartParams& params) {
 //// data collection in various poses of the robot
 // TODO: This CoM params file should list the parameters with names of the links
 // Those names should then be used to set these parameters
-void SetKrangComParams(char* com_params_path, robot) {
+void SetKrangComParams(const char* com_params_path,
+                       dart::dynamics::SkeletonPtr robot) {
   // Load the parameters from the file
   Eigen::MatrixXd beta;
   try {
@@ -316,13 +317,14 @@ void SetKrangComParams(char* com_params_path, robot) {
 
   // Set the parameters in the robot
   Eigen::Vector3d bodyMCOM;
+  int num_body_params = 4;
   double mi;
-  int numBodies = betaParams.cols() / bodyParams;
+  int numBodies = beta.cols() / num_body_params;
   for (int i = 0; i < numBodies; i++) {
-    mi = betaParams(0, i * bodyParams);
-    bodyMCOM(0) = betaParams(0, i * bodyParams + 1);
-    bodyMCOM(1) = betaParams(0, i * bodyParams + 2);
-    bodyMCOM(2) = betaParams(0, i * bodyParams + 3);
+    mi = beta(0, i * num_body_params);
+    bodyMCOM(0) = beta(0, i * num_body_params + 1);
+    bodyMCOM(1) = beta(0, i * num_body_params + 2);
+    bodyMCOM(2) = beta(0, i * num_body_params + 3);
 
     robot->getBodyNode(i)->setMass(mi);
     robot->getBodyNode(i)->setLocalCOM(bodyMCOM / mi);
@@ -347,9 +349,9 @@ void SetKrangInitPos(const KrangInitPoseParams& params,
   std::vector<std::string> right_arm_joint_names = {"RJ1", "RJ2", "RJ3", "RJ4",
                                                     "RJ5", "RJ6", "RJ7"};
   for (int i = 0; i < 7; i++) {
-    krang->getJoint(left_arm_joint_names(i))
+    krang->getJoint(left_arm_joint_names[i])
         ->setPosition(0, params.q_left_arm_init(i));
-    krang->getJoint(right_arm_joint_names(i))
+    krang->getJoint(right_arm_joint_names[i])
         ->setPosition(0, params.q_right_arm_init(i));
   }
 }
@@ -373,24 +375,24 @@ Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& heading_init,
 // Set Krang Joint position limits
 void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
                                  dart::dynamics::SkeletonPtr krang) {
-  krang->getJoint("JWaist")->setPositioniLowerLimit(0, params.waist_min);
-  krang->getJoint("JWaist")->setPositioniUpperLimit(0, params.waist_max);
-  krang->getJoint("JTorso")->setPositioniLowerLimit(0, params.torso_min);
-  krang->getJoint("JTorso")->setPositioniUpperLimit(0, params.torso_max);
+  krang->getJoint("JWaist")->setPositionLowerLimit(0, params.waist_min);
+  krang->getJoint("JWaist")->setPositionUpperLimit(0, params.waist_max);
+  krang->getJoint("JTorso")->setPositionLowerLimit(0, params.torso_min);
+  krang->getJoint("JTorso")->setPositionUpperLimit(0, params.torso_max);
   std::vector<std::string> rotating_joint_names = {"LJ1", "LJ3", "LJ5", "LJ7",
                                                    "RJ1", "RJ3", "RJ5", "RJ7"};
   for (int i = 0; i < rotating_joint_names.size(); i++) {
-    krang->getJoint(rotating_joint_names(i))
-        ->setPositioniLowerLimit(0, params.rotating_joint_min);
-    krang->getJoint(rotating_joint_names(i))
-        ->setPositioniUpperLimit(0, params.rotating_joint_max);
+    krang->getJoint(rotating_joint_names[i])
+        ->setPositionLowerLimit(0, params.rotating_joint_min);
+    krang->getJoint(rotating_joint_names[i])
+        ->setPositionUpperLimit(0, params.rotating_joint_max);
   }
   std::vector<std::string> bending_joint_names = {"LJ2", "LJ4", "LJ6",
                                                   "RJ2", "RJ4", "RJ6"};
   for (int i = 0; i < bending_joint_names.size(); i++) {
-    krang->getJoint(bending_joint_names(i))
-        ->setPositioniLowerLimit(0, params.bending_joint_min);
-    krang->getJoint(bending_joint_names(i))
-        ->setPositioniUpperLimit(0, params.bending_joint_max);
+    krang->getJoint(bending_joint_names[i])
+        ->setPositionLowerLimit(0, params.bending_joint_min);
+    krang->getJoint(bending_joint_names[i])
+        ->setPositionUpperLimit(0, params.bending_joint_max);
   }
 }
