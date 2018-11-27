@@ -64,5 +64,27 @@ class SchunkMotor : public MotorBase {
   double GetVelocity() override;
   double GetCurrent() override;
   std::string GetMotorType() override;
+
+  dart::dynamics::JointPtr joint_;
+  double motor_power_;
+  double nominal_torque_;
+  double peak_torque_;
+  double max_angular_velocity_;
+  double max_angular_acceleration_;
+  double gear_ratio_;
+  double nominal_power_current_;
+  double max_current_;
+
+  double coulomb_friction_;
+  double viscous_friction_;
+  struct Gains {
+    double Kp_;
+    double Kd_;
+  } position_ctrl_gains_, speed_ctrl_gains_;
+  void ReadParams(const char* motor_param_file);
+  enum Mode { kLocked, kPositionCtrl, kVelocityCtrl, kCurrentCtrl } mode_;
+  double reference_position_;
+  double reference_speed_;
+  double reference_current_;
 };
 #endif  // KRANG_SIMULATION_SCHUNK_MOTOR_H_

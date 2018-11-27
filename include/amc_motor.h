@@ -51,7 +51,7 @@
 class AmcMotor : public MotorBase {
  public:
   AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
-           const char* motor_config_file);
+              const char* motor_config_file);
   ~AmcMotor() { Destroy(); }
   void Update() override;
   void Destroy() override;
@@ -64,5 +64,33 @@ class AmcMotor : public MotorBase {
   double GetVelocity() override;
   double GetCurrent() override;
   std::string GetMotorType() override;
+
+  dart::dynamics::JointPtr joint_;
+
+  // Motor Params
+  double rated_voltage_;
+  double rated_speed_;
+  double rated_torque_;
+  double rated_power_;
+  double rated_current_;
+  double line_to_line_resistance_;
+  double line_to_line_inductance_;
+  double torque_constant_;
+  double back_emf_voltage_;
+  double rotor_inertia_;
+
+  // Gear box params
+  double gear_ratio_;
+  double rated_output_torque_;
+  double max_output_torque_;
+  double rated_input_speed_;
+  double stages_;
+  double max_backlash_;
+
+  // Cooked up by us
+  double viscous_friction_;
+
+  void ReadParams(const char* motor_param_file);
+  double reference_current_;
 };
 #endif  // KRANG_SIMULATION_AMC_MOTOR_H_
