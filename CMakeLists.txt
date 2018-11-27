@@ -31,7 +31,7 @@ set(EIGEN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/eigen)
 # NOTE: Ideally we would like to 'find' these packages but for now, we assume they are either
 # in /usr/lib or /usr/local/lib
 #link_libraries(amino ntcan protobuf-c ach somatic stdc++ filter pcio pthread ncurses dart fcl tinyxml tinyxml2 kore assimp GL)
-link_libraries(stdc++ dart GL config4cpp amino ntcan protobuf-c ach somatic)
+link_libraries(stdc++ dart GL config4cpp amino protobuf-c ach somatic)
 include_directories(/usr/include/dart)
 
 # ================================================================================================
