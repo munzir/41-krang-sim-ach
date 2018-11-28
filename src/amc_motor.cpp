@@ -71,18 +71,21 @@ AmcMotor::AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
 
   // Read parameters from file
   // TODO: How to avoid the hardcoded path to cfg/amc folder?
-  ReadParams(("../cfg/" + motor_make + "/" + motor_model + ".cfg").c_str());
+  ReadParams(("/home/munzir/Me/5-Work/01-PhD/01-WholeBodyControlAttempt1/"
+              "41-krang-sim-ach/cfg/" +
+              motor_make + "/" + motor_model + ".cfg")
+                 .c_str());
 
-  const double Newton_meters_per_pound_inch = 0.11298482933333;
-  const double radians_per_second_per_rpm = 0.104719755;
+  const double kNewtonMetersPerPoundInch = 0.11298482933333;
+  const double kRadiansPerSecondPerRpm = 0.104719755;
   joint_->setForceUpperLimit(0,
-                             max_output_torque_ * Newton_meters_per_pound_inch);
+                             max_output_torque_ * kNewtonMetersPerPoundInch);
   joint_->setForceLowerLimit(
-      0, -max_output_torque_ * Newton_meters_per_pound_inch);
+      0, -max_output_torque_ * kNewtonMetersPerPoundInch);
   joint_->setVelocityUpperLimit(
-      0, 1.5 * rated_speed_ * radians_per_second_per_rpm);
+      0, 1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
   joint_->setVelocityLowerLimit(
-      0, -1.5 * rated_speed_ * radians_per_second_per_rpm);
+      0, -1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
   joint_->setDampingCoefficient(0, viscous_friction_);
 
   CurrentCmd(0.0);
@@ -154,9 +157,9 @@ void AmcMotor::ReadParams(const char* motor_param_file) {
   }
 }
 void AmcMotor::Update() {
-  const double Newton_meters_per_ounce_inch = 0.00706155183333;
+  const double kNewtonMetersPerOunceInch = 0.00706155183333;
   double torque = reference_current_ *
-                  (Newton_meters_per_ounce_inch * torque_constant_) *
+                  (kNewtonMetersPerOunceInch * torque_constant_) *
                   gear_ratio_;
   joint_->setForce(0, torque);
 }
@@ -179,9 +182,9 @@ double AmcMotor::GetPosition() { return joint_->getPosition(0); }
 double AmcMotor::GetVelocity() { return joint_->getVelocity(0); }
 
 double AmcMotor::GetCurrent() {
-  const double Newton_meters_per_ounce_inch = 0.00706155183333;
+  const double kNewtonMetersPerOunceInch = 0.00706155183333;
   return (joint_->getForce(0) /
-          (Newton_meters_per_ounce_inch * torque_constant_) / gear_ratio_);
+          (kNewtonMetersPerOunceInch * torque_constant_) / gear_ratio_);
 }
 
 std::string AmcMotor::GetMotorType() { return "amc"; }

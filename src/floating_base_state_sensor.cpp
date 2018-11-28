@@ -50,12 +50,12 @@ void FloatingBaseStateSensor::Update() {
   // "imu"
 
   // The angle that x_imu makes wrt the -z-axis of the base frame
-  static const double mount_angle = -.7853981634;
+  static const double lMountAngle = -.7853981634;
 
   // Axes of "imu" frame represented in the base frame
   Eigen::Vector3d x_imu_wrt_base, y_imu_wrt_base, z_imu_wrt_base;
-  x_imu_wrt_base << sin(mount_angle), 0, -cos(mount_angle);
-  y_imu_wrt_base << cos(mount_angle), 0, sin(mount_angle);
+  x_imu_wrt_base << sin(lMountAngle), 0, -cos(lMountAngle);
+  y_imu_wrt_base << cos(lMountAngle), 0, sin(lMountAngle);
   z_imu_wrt_base << 0, -1, 0;
 
   // Rotation matrix of "imu" frame wrt base frame
