@@ -74,12 +74,15 @@ SchunkMotor::SchunkMotor(dart::dynamics::SkeletonPtr robot,
   // TODO: How to avoid the hardcoded path to cfg/schunk folder?
   ReadParams(("../cfg/" + motor_make + "/" + motor_model + ".cfg").c_str());
 
+  const double kRadiansPerDegree = M_PI / 180.0;
   joint_->setForceUpperLimit(0, peak_torque_);
   joint_->setForceLowerLimit(0, -peak_torque_);
-  joint_->setVelocityUpperLimit(0, max_angular_velocity_);
-  joint_->setVelocityLowerLimit(0, -max_angular_velocity_);
-  joint_->setAccelerationUpperLimit(0, max_angular_acceleration_);
-  joint_->setAccelerationLowerLimit(0, -max_angular_acceleration_);
+  joint_->setVelocityUpperLimit(0, max_angular_velocity_ * kRadiansPerDegree);
+  joint_->setVelocityLowerLimit(0, -max_angular_velocity_ * kRadiansPerDegree);
+  joint_->setAccelerationUpperLimit(
+      0, max_angular_acceleration_ * kRadiansPerDegree);
+  joint_->setAccelerationLowerLimit(
+      0, -max_angular_acceleration_i * kRadiansPerDegree);
   joint_->setCoulombFriction(0, coulomb_friction_);
   joint_->setDampingCoefficient(0, viscous_friction_);
 
