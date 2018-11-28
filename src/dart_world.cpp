@@ -274,7 +274,9 @@ dart::dynamics::SkeletonPtr CreateKrang(DartParams& params) {
   SetKrangComParams(params.com_params_path, krang);
 
   // Set the positions
+  std::cout << " setting krang init pose ... " << std::endl;
   SetKrangInitPos(params.init_pose_params, krang);
+  std::cout << " done setting krang init pose ... " << std::endl << std::endl;
 
   // If balanced init pose is required
   if (params.init_pose_params.init_with_balance_pose) {
@@ -289,7 +291,9 @@ dart::dynamics::SkeletonPtr CreateKrang(DartParams& params) {
   }
 
   // Set position limits
+  std::cout << " setting krang joint position limits ... " << std::endl;
   SetKrangJointPositionLimits(params.position_limit_params, krang);
+  std::cout << " done setting krang joint position limits ... " << std::endl;
 
   // Set wheel frictions
   // TODO: Is this correct?
@@ -345,9 +349,9 @@ void SetKrangInitPos(const KrangInitPoseParams& params,
   krang->getJoint("JWaist")->setPosition(0, params.q_waist_init);
   krang->getJoint("JTorso")->setPosition(0, params.q_torso_init);
   std::vector<std::string> left_arm_joint_names = {"LJ1", "LJ2", "LJ3", "LJ4",
-                                                   "LJ5", "LJ6", "LJ7"};
+                                                   "LJ5", "LJ6", "LJFT"};
   std::vector<std::string> right_arm_joint_names = {"RJ1", "RJ2", "RJ3", "RJ4",
-                                                    "RJ5", "RJ6", "RJ7"};
+                                                    "RJ5", "RJ6", "RJFT"};
   for (int i = 0; i < 7; i++) {
     krang->getJoint(left_arm_joint_names[i])
         ->setPosition(0, params.q_left_arm_init(i));
@@ -379,8 +383,8 @@ void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
   krang->getJoint("JWaist")->setPositionUpperLimit(0, params.waist_max);
   krang->getJoint("JTorso")->setPositionLowerLimit(0, params.torso_min);
   krang->getJoint("JTorso")->setPositionUpperLimit(0, params.torso_max);
-  std::vector<std::string> rotating_joint_names = {"LJ1", "LJ3", "LJ5", "LJ7",
-                                                   "RJ1", "RJ3", "RJ5", "RJ7"};
+  std::vector<std::string> rotating_joint_names = {"LJ1", "LJ3", "LJ5", "LJFT",
+                                                   "RJ1", "RJ3", "RJ5", "RJFT"};
   for (int i = 0; i < rotating_joint_names.size(); i++) {
     krang->getJoint(rotating_joint_names[i])
         ->setPositionLowerLimit(0, params.rotating_joint_min);

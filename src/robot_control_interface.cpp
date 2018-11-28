@@ -89,9 +89,9 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
     params->num_motor_groups_ = cfg->lookupFloat(scope, "num_motor_groups");
     std::cout << "num_motor_groups: " << params->num_motor_groups_ << std::endl;
 
-    std::stringstream ss1;
     for (int i = 0; i < params->num_motor_groups_; i++) {
       // Construct strings to lookup in the cfg file
+      std::stringstream ss1;
       ss1 << "motor_group" << i + 1;
       std::string motor_group_str = ss1.str();
       std::string motor_group_joints_str = motor_group_str + "_joints";
@@ -101,7 +101,8 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
       // Lookup motor group name
       params->motor_group_names_.push_back(
           std::string(cfg->lookupString(scope, motor_group_str.c_str())));
-      std::cout << motor_group_str << ": " << params->motor_group_names_[i];
+      std::cout << motor_group_str << ": " << params->motor_group_names_[i]
+                << std::endl;
 
       // Lookup motor group joint names list. The list is a space separated.
       // So we split the string by spaces and store it as a vector
@@ -113,7 +114,7 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
       params->motor_group_joints_.push_back(
           std::vector<std::string>(begin, end));
       std::cout << motor_group_joints_str << ": ";
-      for(int j = 0; j < params->motor_group_joints_[i].size(); j++)
+      for (int j = 0; j < params->motor_group_joints_[i].size(); j++)
         std::cout << params->motor_group_joints_[i][j] << " ";
       std::cout << std::endl;
 
@@ -121,35 +122,38 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
       params->motor_group_command_channel_names_.push_back(std::string(
           cfg->lookupString(scope, motor_group_cmd_chan_str.c_str())));
       std::cout << motor_group_cmd_chan_str << ": "
-                << params->motor_group_command_channel_names_[i];
+                << params->motor_group_command_channel_names_[i] << std::endl;
 
       // Lookup state channel name for the motor group
       params->motor_group_state_channel_names_.push_back(std::string(
           cfg->lookupString(scope, motor_group_state_chan_str.c_str())));
       std::cout << motor_group_state_chan_str << ": "
-                << params->motor_group_state_channel_names_[i];
-
-      ss1.clear();
-      ss2.clear();
+                << params->motor_group_state_channel_names_[i] << std::endl;
     }
+
+    params->num_sensor_groups_ = cfg->lookupFloat(scope, "num_sensor_groups");
+    std::cout << "num_sensor_groups: " << params->num_sensor_groups_
+              << std::endl;
+
     for (int i = 0; i < params->num_sensor_groups_; i++) {
       // Construct strings to lookup in the cfg file
+      std::stringstream ss1;
       ss1 << "sensor_group" << i + 1;
       std::string sensor_group_str = ss1.str();
-      std::string sensor_group_state_chan_str = sensor_group_str + "_state_chan";
+      std::string sensor_group_state_chan_str =
+          sensor_group_str + "_state_chan";
 
       // Lookup sensor group name
       params->sensor_group_names_.push_back(
           std::string(cfg->lookupString(scope, sensor_group_str.c_str())));
-      std::cout << sensor_group_str << ": " << params->sensor_group_names_[i];
+      std::cout << sensor_group_str << ": " << params->sensor_group_names_[i]
+                << std::endl;
 
       // Lookup state channel name for the sensor group
       params->sensor_group_state_channel_names_.push_back(std::string(
           cfg->lookupString(scope, sensor_group_state_chan_str.c_str())));
       std::cout << sensor_group_state_chan_str << ": "
-                << params->sensor_group_state_channel_names_[i];
-
-      ss1.clear();
+                << params->sensor_group_state_channel_names_[i] << std::endl;
     }
   } catch (const config4cpp::ConfigurationException& ex) {
     std::cerr << ex.c_str() << std::endl;
