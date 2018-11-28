@@ -77,4 +77,4 @@
 # bash
 !/bash/
 /bash/*
-/bash/krang-sim-interface
+!/bash/krang-sim-interface
