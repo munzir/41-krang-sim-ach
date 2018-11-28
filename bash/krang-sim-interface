@@ -1,0 +1,220 @@
+#!/bin/bash
+
+### CONFIG ###
+
+### PROCESS TO START ###
+# Filename containing Hardware Mode
+HWModeFilename='/tmp/.krangrc'
+GRIPPER_TYPE='Schunk'
+
+# channel names
+JS_C='joystick-data'
+IMU_C='imu-data'
+AMC_C='amc-cmd'
+AMC_S='amc-state'
+WAIST_C='waist-cmd'
+WAIST_S='waist-state'
+WAISTD_C='waistd-cmd'
+RLWA_C='rlwa-cmd'
+RLWA_S='rlwa-state'
+LLWA_C='llwa-cmd'
+LLWA_S='llwa-state'
+TORSO_C='torso-cmd'
+TORSO_S='torso-state'
+
+ACH_MODE=666 # better to use group permissions, but not worth it here
+
+# Set the color for stopping
+STARTCOLOR="\033[1;32m"
+STOPCOLOR="\033[1;31m"
+QUESTIONCOLOR="\033[1;35m"
+NOCOLOR="\033[0;37m"
+
+### FUNCTION DEFINITION ####
+
+# ************************************************************************************************
+ShowUsage()
+{
+	echo "Usage: $0 {start|stop|restart|status|create|delete}"
+	echo '          start          - start all the daemons for full body'
+	echo '          stop           - stop all the daemons'
+	echo '          restart        - stop and then start all the daemons'
+	echo '          status         - show process command'
+	echo '          create         - create all related ach channels'
+	echo '          delete         - delete all ach channels in /dev/shm'
+}
+
+# ************************************************************************************************
+CreateAllAchChan() {
+	ach -o $ACH_MODE -1 -C $JS_C         -m 10 -n 78 || exit 1
+	ach -o $ACH_MODE -1 -C $IMU_C        -m 10 -n 54 || exit 1
+	ach -o $ACH_MODE -1 -C $AMC_C        -m 10 -n $((8*2  + 512)) || exit 1
+	ach -o $ACH_MODE -1 -C $AMC_S        -m 10 -n $((16*2 + 512)) || exit 1
+  ach -o $ACH_MODE -1 -C $WAIST_C      -m 10 -n $((8*2  + 512)) || exit 1
+  ach -o $ACH_MODE -1 -C $WAIST_S      -m 10 -n $((24*2 + 512)) || exit 1
+  ach -o $ACH_MODE -1 -C $WAISTD_C     -m 10 -n $((4+512)) || exit 1
+	ach -o $ACH_MODE -1 -C $RLWA_C       -m 10 -n $((8*7  + 512)) || exit 1
+	ach -o $ACH_MODE -1 -C $RLWA_S       -m 10 -n $((24*7 + 512)) || exit 1
+	ach -o $ACH_MODE -1 -C $LLWA_C       -m 10 -n $((8*7  + 512)) || exit 1
+	ach -o $ACH_MODE -1 -C $LLWA_S       -m 10 -n $((24*7 + 512)) || exit 1
+	ach -o $ACH_MODE -1 -C $TORSO_C      -m 10 -n $((8*1  + 512)) || exit 1
+	ach -o $ACH_MODE -1 -C $TORSO_S      -m 10 -n $((24*1 + 512)) || exit 1
+}
+
+# ************************************************************************************************
+DeleteAllAchChan()
+{
+	# deleting all ach channels
+	# please don't delete /dev/shm/achshm-bms-data,
+	# since battery daemon needs it.
+	ach -U $JS_C
+	ach -U $IMU_C
+	ach -U $AMC_C
+	ach -U $AMC_S
+	ach -U $WAIST_C
+	ach -U $WAIST_S
+	ach -U $WAISTD_C
+	ach -U $RLWA_C
+	ach -U $RLWA_S
+	ach -U $LLWA_C
+	ach -U $LLWA_S
+	ach -U $TORSO_C
+	ach -U $TORSO_S
+}
+
+# ************************************************************************************************
+# Assuming the last issued command is to create a daemon, checks the result
+check () 
+{
+	rc=$?
+	if [ $rc -eq 0 ]; then
+		echo "Created "$1" daemon successfully."
+	else
+		echo "Failed to create "$1" daemon. Exitting."
+		exit 1
+	fi
+}
+
+# ************************************************************************************************
+# Creates the daemons that talk with the module drivers over CAN and inform our programs with ACH
+StartAllProcess()
+{
+	echo -e $STARTCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ STARTING DAEMONS ^^^^^^^^^^^^\
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" $NOCOLOR
+
+	# =========================================================================
+	# Setup the base 
+
+	echo -e $STARTCOLOR "\nStarting joystick daemon" $NOCOLOR
+
+	# joystick
+	sns -a jachd; result=$?
+	if [ $result -eq 0 ]; then echo "Joystick daemon already alive"
+	else
+		jachd -d -c joystick-data
+		check "joystick"
+	fi
+
+	echo -e $STARTCOLOR "\nStarting krang-waist daemon" $NOCOLOR
+  # The krang-waist daemon
+  if [ -e "/var/run/somatic/krang-waist.pid" ]; then
+ 	echo "krang-waist daemon already alive"
+  else
+  	start-stop-daemon --start --user root --chuid root:root \
+      --pidfile /var/run/somatic/krang-waist.pid --background --make-pidfile \
+      --exec /usr/local/bin/krang-waist -- -c waist-cmd -s waist-state -d waistd-cmd   	
+		check "krang-waist"
+  fi
+	echo -e $STARTCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ START COMPLETE ^^^^^^^^^^^^\
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" $NOCOLOR
+}
+
+# ************************************************************************************************
+# Stops all the daemons and deletes their resource folders in /var/run/somatic.
+StopAllProcess()
+{
+
+	echo -e $STOPCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ STOPPING DAEMONS ^^^^^^^^^^^^\
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" $NOCOLOR
+
+	# =========================================================================
+	# Clean up until the base
+
+	echo -e $STOPCOLOR "\nSending SIGTERM to joystick daemon" $NOCOLOR
+	sns -k jachd
+
+	# =========================================================================
+	# Clean up the waist
+
+	echo -e $STOPCOLOR "\nUsing start-stop-daemon to stop the krang-waist daemon" $NOCOLOR
+	start-stop-daemon --stop --user root --pidfile /var/run/somatic/krang-waist.pid
+	rm -rf /var/run/somatic/krang-waist.pid
+
+	echo -e $STOPCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ STOP COMPLETE ^^^^^^^^^^^^^^^^^^\
+^^^^^^^^^^^^^^^^^^^^^^^^^\n" $NOCOLOR
+}
+
+
+isalive() {
+	sns -a "$1"
+	if [ 0 -eq "$?"  ]; then
+	    echo $1 alive
+	else
+	    echo $1 NOT ALIVE
+	    exit 1;
+	fi
+}
+
+PrintInfo () {
+	isalive slogd
+	isalive jachd
+}
+
+###########################
+#          MAIN           #
+###########################
+
+case "$1" in
+# Stop all processes
+	'stop' )
+	    StopAllProcess
+	    ;;
+
+	'start' )
+	    echo ' '
+	    CreateAllAchChan
+	    StartAllProcess
+	    echo ' '
+				;;
+
+# Stop and then start all processes
+	'restart' )
+	    echo ' '
+	    StopAllProcess
+	    StartAllProcess
+	    echo ' '
+	    ;;
+
+	'status' )
+	    PrintInfo
+	    ;;
+# Create all ach channels
+	'create' )
+	    CreateAllAchChan
+	    ;;
+# Delete all channels
+	'delete' )
+	    DeleteAllAchChan
+	    ;;
+
+# HELP please
+	*)
+	    ShowUsage
+	    exit 1
+	    ;;
+esac
+
+exit 0
+
+
+#eof
