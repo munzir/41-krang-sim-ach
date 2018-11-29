@@ -44,6 +44,7 @@
 
 #include <assert.h>
 #include <config4cpp/Configuration.h>  // config4cpp::Configuration
+#include <algorithm>                   // std::min, std::max
 #include <dart/dart.hpp>               // dart::dynamics::
 #include <iostream>                    // std::cerr
 #include <sstream>                     // istringstream
@@ -168,19 +169,22 @@ void SchunkMotor::Update() {
       double torque =
           -position_ctrl_gains_.Kp_ * (current_position - reference_position_) -
           position_ctrl_gains_.Kd_ * (current_speed - reference_speed);
-      joint_->setForce(0, torque);
+      joint_->setForce(0,
+                       std::min(std::max(torque, -peak_torque_), peak_torque_));
       break;
     }
     case kVelocityCtrl: {
       double current_speed = joint_->getVelocity(0);
       double torque =
           -speed_ctrl_gains_.Kd_ * (current_speed - reference_speed_);
-      joint_->setForce(0, torque);
+      joint_->setForce(0,
+                       std::min(std::max(torque, -peak_torque_), peak_torque_));
       break;
     }
     case kCurrentCtrl: {
       double torque = reference_current_ * peak_torque_ / max_current_;
-      joint_->setForce(0, torque);
+      joint_->setForce(0,
+                       std::min(std::max(torque, -peak_torque_), peak_torque_));
       break;
     }
   }

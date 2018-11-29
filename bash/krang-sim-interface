@@ -111,7 +111,7 @@ StartAllProcess()
 	sns -a jachd; result=$?
 	if [ $result -eq 0 ]; then echo "Joystick daemon already alive"
 	else
-		jachd -d -c joystick-data
+		jachd -d -c joystick-data -v -v -v
 		check "joystick"
 	fi
 

@@ -89,6 +89,7 @@ class AmcMotor : public MotorBase {
 
   // Cooked up by us
   double viscous_friction_;
+  double max_input_current_;
 
   void ReadParams(const char* motor_param_file);
   double reference_current_;
