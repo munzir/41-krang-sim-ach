@@ -44,6 +44,7 @@
 
 #include <assert.h>
 #include <config4cpp/Configuration.h>  // config4cpp::Configuration
+#include <algorithm>                   // std::min, std::max
 #include <dart/dart.hpp>               // dart::dynamics::
 #include <iostream>                    // std::cerr
 #include <sstream>                     // istringstream
@@ -76,16 +77,18 @@ AmcMotor::AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
               motor_make + "/" + motor_model + ".cfg")
                  .c_str());
 
-  const double kNewtonMetersPerPoundInch = 0.11298482933333;
+  const double kNewtonMetersPerOunceInch = 0.00706155183333;
   const double kRadiansPerSecondPerRpm = 0.104719755;
-  joint_->setForceUpperLimit(0,
-                             max_output_torque_ * kNewtonMetersPerPoundInch);
+  joint_->setForceUpperLimit(
+      0, max_input_current_ * (torque_constant_ * kNewtonMetersPerOunceInch) *
+             gear_ratio_);
   joint_->setForceLowerLimit(
-      0, -max_output_torque_ * kNewtonMetersPerPoundInch);
-  joint_->setVelocityUpperLimit(
-      0, 1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
-  joint_->setVelocityLowerLimit(
-      0, -1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
+      0, -max_input_current_ * (torque_constant_ * kNewtonMetersPerOunceInch) *
+             gear_ratio_);
+  joint_->setVelocityUpperLimit(0,
+                                1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
+  joint_->setVelocityLowerLimit(0,
+                                -1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
   joint_->setDampingCoefficient(0, viscous_friction_);
 
   CurrentCmd(0.0);
@@ -150,6 +153,9 @@ void AmcMotor::ReadParams(const char* motor_param_file) {
     viscous_friction_ = cfg->lookupFloat(scope, "viscous_friction");
     std::cout << "viscous_friction: " << viscous_friction_ << std::endl;
 
+    max_input_current_ = cfg->lookupFloat(scope, "max_input_current");
+    std::cout << "max_input_current: " << max_input_current_ << std::endl;
+
   } catch (const config4cpp::ConfigurationException& ex) {
     std::cerr << ex.c_str() << std::endl;
     cfg->destroy();
@@ -159,9 +165,11 @@ void AmcMotor::ReadParams(const char* motor_param_file) {
 void AmcMotor::Update() {
   const double kNewtonMetersPerOunceInch = 0.00706155183333;
   double torque = reference_current_ *
-                  (kNewtonMetersPerOunceInch * torque_constant_) *
-                  gear_ratio_;
-  joint_->setForce(0, torque);
+                  (kNewtonMetersPerOunceInch * torque_constant_) * gear_ratio_;
+  static double peak_torque = max_input_current_ *
+                              (torque_constant_ * kNewtonMetersPerOunceInch) *
+                              gear_ratio_;
+  joint_->setForce(0, std::min(std::max(torque, -peak_torque), peak_torque));
 }
 void AmcMotor::Destroy() {}
 
@@ -183,8 +191,8 @@ double AmcMotor::GetVelocity() { return joint_->getVelocity(0); }
 
 double AmcMotor::GetCurrent() {
   const double kNewtonMetersPerOunceInch = 0.00706155183333;
-  return (joint_->getForce(0) /
-          (kNewtonMetersPerOunceInch * torque_constant_) / gear_ratio_);
+  return (joint_->getForce(0) / (kNewtonMetersPerOunceInch * torque_constant_) /
+          gear_ratio_);
 }
 
 std::string AmcMotor::GetMotorType() { return "amc"; }
