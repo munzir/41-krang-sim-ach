@@ -3,12 +3,12 @@ Hardware simulation of Krang on DART. Publishes states to and subscribes for inp
 
 ## Dependencies
 
-- [DART](https://dartsim.github.io/install_dart_on_ubuntu.html)
-- [37-somatic](https://github.gatech.edu/WholeBodyControlAttempt1/37-somatic)
-- [09-URDF](https://github.gatech.edu/WholeBodyControlAttempt1/09-URDF)
-- [18-OnlineCoM](https://github.gatech.edu/WholeBodyControlAttempt1/18-OnlineCoM)
-- [42-joystick](https://github.gatech.edu/WholeBodyControlAttempt1/42-joystick)
-- [43-krang-waist](https://github.gatech.edu/WholeBodyControlAttempt1/43-krang-waist)
+- [DART](https://dartsim.github.io/install_dart_on_ubuntu.html) - Use 'apt install' instructions on the page.
+- [09-URDF](https://github.gatech.edu/WholeBodyControlAttempt1/09-URDF) - Clone this repo. No installation needed.
+- [18-OnlineCoM](https://github.gatech.edu/WholeBodyControlAttempt1/18-OnlineCoM) - Clone this repo. No installation needed.
+- [37-somatic](https://github.gatech.edu/WholeBodyControlAttempt1/37-somatic) - Follow installation instructions on the git readme.
+- [42-joystick](https://github.gatech.edu/WholeBodyControlAttempt1/42-joystick) - Follow installation instructions on the git readme.
+- [43-krang-waist](https://github.gatech.edu/WholeBodyControlAttempt1/43-krang-waist) - Follow installation instructions on the git readme.
 
 ## Installation
 
