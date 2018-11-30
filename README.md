@@ -35,7 +35,7 @@ Finally, compile the code. Assuming you are currently in 41-krang-sim-ach, follo
 To use the simulation along with its interface, you first need to launch the ach channels. There is a bash script in the bash folder that takes care of this. Assuming you are in 41-krang-sim-ach, follow the steps:
 
     cd bash
-    sudo service somatic create
+    sudo service somatic start
     sudo ./krang-sim-interface create
 
 Now you are ready to launch the simulation. Assuming you are in 41-krang-sim-ach, follow the steps:
