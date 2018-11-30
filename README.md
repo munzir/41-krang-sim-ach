@@ -35,6 +35,7 @@ Finally, compile the code. Assuming you are currently in 41-krang-sim-ach, follo
 To use the simulation along with its interface, you first need to launch the ach channels. There is a bash script in the bash folder that takes care of this. Assuming you are in 41-krang-sim-ach, follow the steps:
 
     cd bash
+    sudo service somatic start
     sudo ./krang-sim-interface start
 
 Now you are ready to launch the simulation. Assuming you are in 41-krang-sim-ach, follow the steps:
@@ -42,4 +43,10 @@ Now you are ready to launch the simulation. Assuming you are in 41-krang-sim-ach
     cd build
     sudo ./krang-sim-ach
 
-When the window is launched, press spacebar to start simulation. Press 'v' to get rid of the annoying lines on the simulation at body contact points. An example program that can interface with this simulation is found in repo [35-balancing](https://github.gatech.edu/WholeBodyControlAttempt1/35-balancing).
+When the window is launched, press spacebar to start simulation. Press 'v' to get rid of the annoying lines on the simulation at body contact points. An example program that can interface with this simulation is found in repo [35-balancing](https://github.gatech.edu/WholeBodyControlAttempt1/35-balancing). You can press 'Esc' to kill the simulation window.
+
+To close the ach channels and somatic, follow the steps (assuming you are in 41-krang-sim-ach):
+
+    cd bash
+    sudo ./krang-sim-interface stop
+    sudo service somatic stop
