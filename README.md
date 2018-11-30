@@ -41,3 +41,5 @@ Now you are ready to launch the simulation. Assuming you are in 41-krang-sim-ach
 
     cd build
     sudo ./krang-sim-ach
+
+An example program that can interface with this simulation is found in repo [35-balancing](https://github.gatech.edu/WholeBodyControlAttempt1/35-balancing).
