@@ -72,9 +72,8 @@ AmcMotor::AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
 
   // Read parameters from file
   // TODO: How to avoid the hardcoded path to cfg/amc folder?
-  ReadParams(("/home/munzir/Me/5-Work/01-PhD/01-WholeBodyControlAttempt1/"
-              "41-krang-sim-ach/cfg/" +
-              motor_make + "/" + motor_model + ".cfg")
+  ReadParams(("/usr/local/share/krang-sim-ach/cfg/" + motor_make + "/" +
+              motor_model + ".cfg")
                  .c_str());
 
   const double kNewtonMetersPerOunceInch = 0.00706155183333;

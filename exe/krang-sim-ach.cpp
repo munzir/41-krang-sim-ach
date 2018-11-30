@@ -64,17 +64,14 @@ void ExitFunction() { krang_ach->Destroy(); }
 int main(int argc, char* argv[]) {
   // Creates world and loads all objects with desired initial configuration
   char path_to_dart_params[] =
-      "/home/munzir/Me/5-Work/01-PhD/01-WholeBodyControlAttempt1/"
-      "41-krang-sim-ach/cfg/dart_params.cfg";
+      "/usr/local/share/krang-sim-ach/cfg/dart_params.cfg";
   dart::simulation::WorldPtr world = CreateWorld(path_to_dart_params);
 
   // Create interface that allows other programs to interface with out robot
   char path_to_motor_params[] =
-      "/home/munzir/Me/5-Work/01-PhD/01-WholeBodyControlAttempt1/"
-      "41-krang-sim-ach/cfg/krang_motors.cfg";
+      "/usr/local/share/krang-sim-ach/cfg/krang_motors.cfg";
   char path_to_interface_params[] =
-      "/home/munzir/Me/5-Work/01-PhD/01-WholeBodyControlAttempt1/"
-      "41-krang-sim-ach/cfg/ach_params.cfg";
+      "/usr/local/share/krang-sim-ach/cfg/ach_params.cfg";
   krang_ach =
       new RobotControlInterface(world->getSkeleton("krang"),
                                 path_to_motor_params, path_to_interface_params);
