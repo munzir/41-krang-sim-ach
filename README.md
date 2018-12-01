@@ -49,7 +49,7 @@ To close the ach channels and somatic, follow the steps (assuming you are in 41-
 
     cd bash
     sudo ./krang-sim-interface delete
-    sudo service somatic delete
+    sudo service somatic stop
 
 ## Example program
 
