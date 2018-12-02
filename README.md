@@ -16,7 +16,10 @@ Hardware simulation of Krang on DART. Publishes states to and subscribes for inp
   then we need to change the permission for this folder using
   
       chmod 755 config4cpp
-  Once the permissions are properly set, then copy files from bin folder to /usr/local/bin/, from lib folder to /usr/local/lib/, and the config4cpp directory in the include folder to /usr/local/include.
+  Once the permissions are properly set, then copy files from bin folder to /usr/local/bin/, from lib folder to /usr/local/lib/, and the config4cpp directory in the include folder to /usr/local/include. Once the files are copied, do:
+  
+      ldconfig
+  for properly binding config4cpp with the dynamic-linker.
 - [09-URDF](https://github.gatech.edu/WholeBodyControlAttempt1/09-URDF) - Clone this repo. No installation needed.
 - [18-OnlineCoM](https://github.gatech.edu/WholeBodyControlAttempt1/18-OnlineCoM) - Clone this repo. No installation needed.
 - [37-somatic](https://github.gatech.edu/WholeBodyControlAttempt1/37-somatic) - Follow installation instructions on the git readme.
