@@ -3,7 +3,7 @@ Hardware simulation of Krang on DART. Publishes states to and subscribes for inp
 
 ## Dependencies
 
-- [DART](https://dartsim.github.io/install_dart_on_ubuntu.html) - Use 'apt install' instructions on the page.
+- [DART](https://dartsim.github.io/install_dart_on_ubuntu.html) - Use 'apt install' instructions on the page. Along with the basic library also install dart6-utils-dev, dart6-gui-dev and dart6-utils-urdf-dev
 - [config4cpp](http://www.config4star.org/) - Using the link, download the source code for Config4Cpp (C++ version) using the 'compressed tar' option. After extracting, cd into the directory and
 
       make
