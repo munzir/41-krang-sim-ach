@@ -47,7 +47,7 @@
 !/include/schunk_motor.h
 !/include/amc_motor.h
 !/include/waist_motor.h
-!/include/file_oprs.hpp
+!/include/file_ops.hpp
 
 # src
 !/src/
