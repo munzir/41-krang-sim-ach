@@ -54,7 +54,7 @@
 #include <string>                      // std::string
 #include <vector>                      // std::vector
 
-#include "../../18h-Util/file_ops.hpp"  // readInputFileAsMatrix()
+#include "file_ops.hpp"  // readInputFileAsMatrix()
 
 //==============================================================================
 //// Create the world with objects loaded in desired initial configuration
