@@ -48,6 +48,7 @@
 
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
+#include <thread>         // std::thread
 #include <vector>         // std::vector
 
 MotorGroup::MotorGroup(dart::dynamics::SkeletonPtr robot,
@@ -65,6 +66,8 @@ MotorGroup::MotorGroup(dart::dynamics::SkeletonPtr robot,
   interface_ = interface::Create(
       motor_vector_, interface_context, motor_group_name,
       motor_group_command_channel_name, motor_group_state_channel_name);
+
+  thread_ = new std::thread(&MotorGroup::InfiniteRun, this);
 }
 
 void MotorGroup::Update() {
@@ -116,6 +119,7 @@ void MotorGroup::Run() {
 }
 
 void MotorGroup::Destroy() {
+  delete thread_;
   for (int i = 0; i < motor_vector_.size(); i++) delete motor_vector_[i];
   motor_vector_.clear();
   command_val_.clear();

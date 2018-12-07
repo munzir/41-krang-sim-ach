@@ -134,7 +134,15 @@ FloatingBaseStateSensorInterface::FloatingBaseStateSensorInterface(
     FloatingBaseStateSensor* sensor, InterfaceContext& interface_context,
     std::string& sensor_state_channel)
     : sensor_(sensor) {
-  daemon_ = &interface_context.daemon_;
+  char name[] = "imu";
+  somatic_d_opts_t daemon_opts;
+  std::memset(&daemon_opts, 0, sizeof(somatic_d_opts_t));
+  daemon_opts.ident = strdup(name);
+  daemon_opts.daemonize = false;
+  daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_ = new somatic_d_t();
+  std::memset(daemon_, 0, sizeof(somatic_d_t));
+  somatic_d_init(daemon_, &daemon_opts);
 
   // Open ach channel for imu data communication, and allocate memory for the
   // message
@@ -162,6 +170,7 @@ void FloatingBaseStateSensorInterface::Destroy() {
   ach_close(&imu_chan_);
   free(imu_msg_->data);
   free(imu_msg_);
+  somatic_d_destroy(daemon_);
 }
 
 SchunkMotorInterface::SchunkMotorInterface(
@@ -170,7 +179,15 @@ SchunkMotorInterface::SchunkMotorInterface(
     std::string& motor_group_command_channel_name,
     std::string& motor_group_state_channel_name) {
   motor_vector_ptr_ = &motor_vector;
-  daemon_ = &interface_context.daemon_;
+  // daemon_ = &interface_context.daemon_;
+  somatic_d_opts_t daemon_opts;
+  std::memset(&daemon_opts, 0, sizeof(somatic_d_opts_t));
+  daemon_opts.ident = strdup(motor_group_name.c_str());
+  daemon_opts.daemonize = false;
+  daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_ = new somatic_d_t();
+  std::memset(daemon_, 0, sizeof(somatic_d_t));
+  somatic_d_init(daemon_, &daemon_opts);
   wait_time_ = (struct timespec){
       .tv_sec = 0,
       .tv_nsec = (long int)((1.0 / interface_context.frequency_) * 1e9)};
@@ -336,6 +353,7 @@ void SchunkMotorInterface::Destroy() {
   ach_close(&cmd_chan_);
   ach_close(&state_chan_);
   somatic_metadata_free(state_msg_.meta);
+  somatic_d_destroy(daemon_);
 }
 
 AmcMotorInterface::AmcMotorInterface(
@@ -344,7 +362,15 @@ AmcMotorInterface::AmcMotorInterface(
     std::string& motor_group_command_channel_name,
     std::string& motor_group_state_channel_name) {
   motor_vector_ptr_ = &motor_vector;
-  daemon_ = &interface_context.daemon_;
+  // daemon_ = &interface_context.daemon_;
+  somatic_d_opts_t daemon_opts;
+  std::memset(&daemon_opts, 0, sizeof(somatic_d_opts_t));
+  daemon_opts.ident = strdup(motor_group_name.c_str());
+  daemon_opts.daemonize = false;
+  daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_ = new somatic_d_t();
+  std::memset(daemon_, 0, sizeof(somatic_d_t));
+  somatic_d_init(daemon_, &daemon_opts);
   wait_time_ = (struct timespec){
       .tv_sec = 0,
       .tv_nsec = (long int)((1.0 / interface_context.frequency_) * 1e9)};
@@ -486,6 +512,7 @@ void AmcMotorInterface::Destroy() {
   ach_close(&cmd_chan_);
   ach_close(&state_chan_);
   somatic_metadata_free(state_msg_.meta);
+  somatic_d_destroy(daemon_);
 }
 
 WaistMotorInterface::WaistMotorInterface(
@@ -494,7 +521,15 @@ WaistMotorInterface::WaistMotorInterface(
     std::string& motor_group_command_channel_name,
     std::string& motor_group_state_channel_name) {
   motor_vector_ptr_ = &motor_vector;
-  daemon_ = &interface_context.daemon_;
+  // daemon_ = &interface_context.daemon_;
+  somatic_d_opts_t daemon_opts;
+  std::memset(&daemon_opts, 0, sizeof(somatic_d_opts_t));
+  daemon_opts.ident = strdup(motor_group_name.c_str());
+  daemon_opts.daemonize = false;
+  daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_ = new somatic_d_t();
+  std::memset(daemon_, 0, sizeof(somatic_d_t));
+  somatic_d_init(daemon_, &daemon_opts);
   wait_time_ = (struct timespec){
       .tv_sec = 0,
       .tv_nsec = (long int)((1.0 / interface_context.frequency_) * 1e9)};
@@ -652,6 +687,7 @@ void WaistMotorInterface::Destroy() {
   ach_close(&cmd_chan_);
   ach_close(&state_chan_);
   somatic_metadata_free(state_msg_.meta);
+  somatic_d_destroy(daemon_);
 }
 
 SensorInterfaceBase* interface::Create(SensorBase* sensor,

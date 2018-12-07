@@ -49,6 +49,7 @@
 
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
+#include <thread>         // std::thread
 #include <vector>         // std::vector
 
 class MotorGroup {
@@ -69,6 +70,10 @@ class MotorGroup {
 
   void Run();
 
+  void InfiniteRun() {
+    while (true) Run();
+  }
+
   void Destroy();
 
  private:
@@ -77,5 +82,7 @@ class MotorGroup {
 
   MotorBase::MotorCommandType command_;
   std::vector<double> command_val_;
+
+  std::thread* thread_;
 };
 #endif  // KRANG_SIMULATION_MOTOR_GROUP_H_

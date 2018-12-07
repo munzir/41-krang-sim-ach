@@ -78,16 +78,16 @@ class InterfaceContext {
 
 class SensorInterfaceBase {
  public:
-  SensorInterfaceBase() {};
-  ~SensorInterfaceBase() {};
+  SensorInterfaceBase(){};
+  ~SensorInterfaceBase(){};
   virtual void SendState() = 0;
   virtual void Destroy() = 0;
 };
 
 class MotorInterfaceBase {
  public:
-  MotorInterfaceBase() {};
-  ~MotorInterfaceBase() {};
+  MotorInterfaceBase(){};
+  ~MotorInterfaceBase(){};
   virtual void ReceiveCommand(MotorBase::MotorCommandType* command,
                               std::vector<double>* command_val_) = 0;
   virtual void SendState() = 0;

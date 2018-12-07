@@ -53,7 +53,8 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
 
 void MyWindow::timeStepping() {
   // Receive and execute commands from and send states to the interface
-  robot_control_interface_->Run();
+  // not needed because of multi-threading
+  //  robot_control_interface_->Run();
 
   // Step the world through time
   SimWindow::timeStepping();

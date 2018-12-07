@@ -46,6 +46,7 @@
 
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
+#include <thread>         // std::thread
 
 #include "ach_interface.h"  // InterfaceContext, SensorInterfaceBase
 #include "sensor_base.h"    // SensorBase, sensor::
@@ -61,11 +62,17 @@ class SensorGroup {
 
   void Run();
 
+  void InfiniteRun() {
+    while (true) Run();
+  }
+
   void Destroy();
 
  private:
   SensorBase* sensor_;
   SensorInterfaceBase* interface_;
+
+  std::thread* thread_;
 };
 
 #endif  // KRANG_SIMULATION_SENSOR_GROUP_H_
