@@ -48,6 +48,7 @@
 #include "motor_base.h"  // MotorBase::, SchunkMotor, AmcMotor
 
 #include <dart/dart.hpp>  // dart::dynamics
+#include <mutex>          // std::mutex
 #include <string>         // std::string
 #include <thread>         // std::thread
 #include <vector>         // std::vector
@@ -70,11 +71,12 @@ class MotorGroup {
 
   void Run();
 
-  void InfiniteRun() {
-    while (true) Run();
-  }
+  void InfiniteRun();
 
   void Destroy();
+
+ public:
+  std::mutex robot_mutex_;
 
  private:
   std::vector<MotorBase*> motor_vector_;
@@ -84,5 +86,7 @@ class MotorGroup {
   std::vector<double> command_val_;
 
   std::thread* thread_;
+  bool run_;
+  std::mutex run_mutex_;
 };
 #endif  // KRANG_SIMULATION_MOTOR_GROUP_H_

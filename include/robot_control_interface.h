@@ -63,6 +63,10 @@ class RobotControlInterface {
 
   void Run();
 
+ public:
+  std::vector<MotorGroup*> motor_groups_;
+  std::vector<SensorGroup*> sensor_groups_;
+
  private:
   struct RobotControlInterfaceParams {
     int num_motor_groups_;
@@ -78,8 +82,6 @@ class RobotControlInterface {
   void ReadParams(const char* interface_config_file,
                   RobotControlInterfaceParams* params);
   InterfaceContext interface_context_;
-  std::vector<MotorGroup*> motor_groups_;
-  std::vector<SensorGroup*> sensor_groups_;
 };
 
 #endif  // KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_
