@@ -44,6 +44,7 @@
 
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
+#include <thread>         // std::thread
 
 #include "ach_interface.h"  // InterfaceContext, SensorInterfaceBase
 #include "sensor_base.h"    // SensorBase, sensor::
@@ -55,6 +56,7 @@ SensorGroup::SensorGroup(dart::dynamics::SkeletonPtr robot,
   sensor_ = sensor::Create(robot, sensor_group_name);
   interface_ = interface::Create(sensor_, interface_context, sensor_group_name,
                                  sensor_group_state_channel_name);
+  thread_ = new std::thread(&SensorGroup::InfiniteRun, this);
 }
 
 void SensorGroup::Run() {
@@ -63,6 +65,7 @@ void SensorGroup::Run() {
 }
 
 void SensorGroup::Destroy() {
+  delete thread_;
   sensor_->Destroy();
   interface_->Destroy();
 }
