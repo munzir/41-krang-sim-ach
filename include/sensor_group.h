@@ -45,6 +45,7 @@
 #define KRANG_SIMULATION_SENSOR_GROUP_H_
 
 #include <dart/dart.hpp>  // dart::dynamics
+#include <mutex>          // std::mutex
 #include <string>         // std::string
 #include <thread>         // std::thread
 
@@ -62,17 +63,20 @@ class SensorGroup {
 
   void Run();
 
-  void InfiniteRun() {
-    while (true) Run();
-  }
+  void InfiniteRun();
 
   void Destroy();
+
+ public:
+  std::mutex robot_mutex_;
 
  private:
   SensorBase* sensor_;
   SensorInterfaceBase* interface_;
 
   std::thread* thread_;
+  bool run_;
+  std::mutex run_mutex_;
 };
 
 #endif  // KRANG_SIMULATION_SENSOR_GROUP_H_

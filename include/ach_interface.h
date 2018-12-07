@@ -55,6 +55,7 @@
 #include <somatic/daemon.h>  // somatic_d_t, somatic_d_opts_t
 
 #include <time.h>  // struct timespec
+#include <mutex>   // std::mutex
 #include <string>  // std::string
 #include <vector>  // std::vector
 

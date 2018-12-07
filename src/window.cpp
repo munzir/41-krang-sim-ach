@@ -52,10 +52,26 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
 }
 
 void MyWindow::timeStepping() {
-  // Receive and execute commands from and send states to the interface
-  // not needed because of multi-threading
-  //  robot_control_interface_->Run();
+  // Lock all mutexes
+  for (int i = 0; i < robot_control_interface_->motor_groups_.size(); i++) {
+    robot_control_interface_->motor_groups_[i]->robot_mutex_.lock();
+    std::cout << "locked motor group: " << i << std::endl;
+  }
+  for (int i = 0; i < robot_control_interface_->sensor_groups_.size(); i++) {
+    robot_control_interface_->sensor_groups_[i]->robot_mutex_.lock();
+    std::cout << "locked sensor group: " << i << std::endl;
+  }
 
   // Step the world through time
   SimWindow::timeStepping();
+
+  // Unlock all mutexes
+  for (int i = 0; i < robot_control_interface_->motor_groups_.size(); i++) {
+    robot_control_interface_->motor_groups_[i]->robot_mutex_.unlock();
+    std::cout << "unlocked motor group: " << i << std::endl;
+  }
+  for (int i = 0; i < robot_control_interface_->sensor_groups_.size(); i++) {
+    robot_control_interface_->sensor_groups_[i]->robot_mutex_.unlock();
+    std::cout << "unlocked sensor group: " << i << std::endl;
+  }
 }

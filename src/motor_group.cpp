@@ -47,6 +47,7 @@
 #include "motor_base.h"     // motor::Create
 
 #include <dart/dart.hpp>  // dart::dynamics
+#include <mutex>          // std::mutex
 #include <string>         // std::string
 #include <thread>         // std::thread
 #include <vector>         // std::vector
@@ -67,6 +68,7 @@ MotorGroup::MotorGroup(dart::dynamics::SkeletonPtr robot,
       motor_vector_, interface_context, motor_group_name,
       motor_group_command_channel_name, motor_group_state_channel_name);
 
+  run_ = true;
   thread_ = new std::thread(&MotorGroup::InfiniteRun, this);
 }
 
@@ -107,18 +109,40 @@ void MotorGroup::Execute(MotorBase::MotorCommandType& command,
 }
 
 void MotorGroup::Run() {
-  // Receive and execute command
+  // Receive command
   interface_->ReceiveCommand(&command_, &command_val_);
-  if (command_ != MotorBase::kDoNothing) {
-    Execute(command_, command_val_);
-  }
 
-  // Update and send state
-  Update();
-  interface_->SendState();
+  robot_mutex_.lock();
+  {
+    // Execute command
+    if (command_ != MotorBase::kDoNothing) {
+      Execute(command_, command_val_);
+    }
+
+    // Update state
+    Update();
+
+    // Send state
+    interface_->SendState();
+  }
+  robot_mutex_.unlock();
+}
+
+void MotorGroup::InfiniteRun() {
+  bool run = true;
+  while (run) {
+    Run();
+    run_mutex_.lock();
+    run = run_;
+    run_mutex_.unlock();
+  }
 }
 
 void MotorGroup::Destroy() {
+  run_mutex_.lock();
+  run_ = false;
+  run_mutex_.unlock();
+  thread_->join();
   delete thread_;
   for (int i = 0; i < motor_vector_.size(); i++) delete motor_vector_[i];
   motor_vector_.clear();

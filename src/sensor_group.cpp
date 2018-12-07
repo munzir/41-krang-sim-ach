@@ -43,6 +43,7 @@
 #include "sensor_group.h"
 
 #include <dart/dart.hpp>  // dart::dynamics
+#include <mutex>          // std::mutex
 #include <string>         // std::string
 #include <thread>         // std::thread
 
@@ -56,15 +57,34 @@ SensorGroup::SensorGroup(dart::dynamics::SkeletonPtr robot,
   sensor_ = sensor::Create(robot, sensor_group_name);
   interface_ = interface::Create(sensor_, interface_context, sensor_group_name,
                                  sensor_group_state_channel_name);
+  run_ = true;
   thread_ = new std::thread(&SensorGroup::InfiniteRun, this);
 }
 
 void SensorGroup::Run() {
-  sensor_->Update();
-  interface_->SendState();
+  robot_mutex_.lock();
+  {
+    sensor_->Update();
+    interface_->SendState();
+  }
+  robot_mutex_.unlock();
+}
+
+void SensorGroup::InfiniteRun() {
+  bool run = true;
+  while (run) {
+    Run();
+    run_mutex_.lock();
+    run = run_;
+    run_mutex_.unlock();
+  }
 }
 
 void SensorGroup::Destroy() {
+  run_mutex_.lock();
+  run_ = false;
+  run_mutex_.unlock();
+  thread_->join();
   delete thread_;
   sensor_->Destroy();
   interface_->Destroy();
