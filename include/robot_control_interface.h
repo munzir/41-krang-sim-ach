@@ -64,11 +64,15 @@ class RobotControlInterface {
   void Run();
 
  public:
+  bool external_timestepping_;
+  WorldInterface* world_interface_;
   std::vector<MotorGroup*> motor_groups_;
   std::vector<SensorGroup*> sensor_groups_;
 
  private:
   struct RobotControlInterfaceParams {
+    bool external_timestepping_;
+    std::string sim_control_channel_;
     int num_motor_groups_;
     std::vector<std::string> motor_group_names_;
     std::vector<std::vector<std::string>> motor_group_joints_;
