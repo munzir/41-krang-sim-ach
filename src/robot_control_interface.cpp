@@ -52,6 +52,7 @@
 #include <sstream>                     // std::stringstream
 #include <string>                      // std::string
 
+#include "ach_interface.h"  // WorldInterface
 #include "motor_group.h"   // FindMotorType, MotorGroup()
 #include "sensor_group.h"  // FindSensorType, SensorGroup()
 
@@ -61,6 +62,11 @@ RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
     : interface_context_(interface_config_file) {
   RobotControlInterfaceParams params;
   ReadParams(interface_config_file, &params);
+
+  external_timestepping_ = params.external_timestepping_;
+
+  world_interface_ =
+      new WorldInterface(interface_context_, params.sim_control_channel_);
 
   for (int i = 0; i < params.num_sensor_groups_; i++) {
     sensor_groups_.push_back(new SensorGroup(
@@ -85,6 +91,17 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
   try {
     // Parse the cfg file
     cfg->parse(interface_config_file);
+
+    params->external_timestepping_ =
+        cfg->lookupBoolean(scope, "external_timestepping");
+    std::cout << "external_timestepping: "
+              << (params->external_timestepping_ ? "true" : "false")
+              << std::endl;
+
+    params->sim_control_channel_ =
+        std::string(cfg->lookupString(scope, "sim_control_channel"));
+    std::cout << "sim_control_channel: " << params->sim_control_channel
+              << std::endl;
 
     params->num_motor_groups_ = cfg->lookupFloat(scope, "num_motor_groups");
     std::cout << "num_motor_groups: " << params->num_motor_groups_ << std::endl;
@@ -163,6 +180,7 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
   std::cout << std::endl;
 }
 void RobotControlInterface::Destroy() {
+  world_interface_.Destroy();
   for (int i = 0; i < motor_groups_.size(); i++) delete motor_groups_[i];
   motor_groups_.clear();
   for (int i = 0; i < sensor_groups_.size(); i++) delete sensor_groups_[i];
