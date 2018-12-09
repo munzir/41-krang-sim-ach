@@ -58,7 +58,8 @@
 
 //==============================================================================
 //// Create the world with objects loaded in desired initial configuration
-dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params) {
+dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
+                                       bool* render) {
   // Read the parameters
   DartParams params;
   ReadDartParams(path_to_dart_params, &params);
@@ -74,6 +75,9 @@ dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params) {
   // Load robot
   dart::dynamics::SkeletonPtr robot = CreateKrang(params);
   world->addSkeleton(robot);
+
+  // Render?
+  *render = params.render;
 
   return world;
 }
@@ -221,6 +225,10 @@ void ReadDartParams(const char* config_file, DartParams* params) {
         cfg->lookupFloat(scope, "waist_max");
     std::cout << "waist_max: " << params->position_limit_params.waist_max
               << std::endl;
+
+    // Render?
+    params->render = cfg->lookupBoolean(scope, "render");
+    std::cout << "render: " << (params->render ? "true" : "false") << std::endl;
   }
 
   catch (const config4cpp::ConfigurationException& ex) {

@@ -53,8 +53,8 @@
 #include <string>                      // std::string
 
 #include "ach_interface.h"  // WorldInterface
-#include "motor_group.h"   // FindMotorType, MotorGroup()
-#include "sensor_group.h"  // FindSensorType, SensorGroup()
+#include "motor_group.h"    // FindMotorType, MotorGroup()
+#include "sensor_group.h"   // FindSensorType, SensorGroup()
 
 RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
                                              const char* motor_config_file,
@@ -100,7 +100,7 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
 
     params->sim_control_channel_ =
         std::string(cfg->lookupString(scope, "sim_control_channel"));
-    std::cout << "sim_control_channel: " << params->sim_control_channel
+    std::cout << "sim_control_channel: " << params->sim_control_channel_
               << std::endl;
 
     params->num_motor_groups_ = cfg->lookupFloat(scope, "num_motor_groups");
@@ -180,7 +180,7 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
   std::cout << std::endl;
 }
 void RobotControlInterface::Destroy() {
-  world_interface_.Destroy();
+  world_interface_->Destroy();
   for (int i = 0; i < motor_groups_.size(); i++) delete motor_groups_[i];
   motor_groups_.clear();
   for (int i = 0; i < sensor_groups_.size(); i++) delete sensor_groups_[i];
@@ -191,4 +191,20 @@ void RobotControlInterface::Run() {
   for (int i = 0; i < motor_groups_.size(); i++) motor_groups_[i]->Run();
   for (int i = 0; i < sensor_groups_.size(); i++) sensor_groups_[i]->Run();
   interface_context_.Run();
+}
+void RobotControlInterface::MutexLock() {
+  for (int i = 0; i < motor_groups_.size(); i++) {
+    motor_groups_[i]->robot_mutex_.lock();
+  }
+  for (int i = 0; i < sensor_groups_.size(); i++) {
+    sensor_groups_[i]->robot_mutex_.lock();
+  }
+}
+void RobotControlInterface::MutexUnlock() {
+  for (int i = 0; i < motor_groups_.size(); i++) {
+    motor_groups_[i]->robot_mutex_.unlock();
+  }
+  for (int i = 0; i < sensor_groups_.size(); i++) {
+    sensor_groups_[i]->robot_mutex_.unlock();
+  }
 }

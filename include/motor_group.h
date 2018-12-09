@@ -66,8 +66,8 @@ class MotorGroup {
 
   void Update();
 
-  void Execute(MotorBase::MotorCommandType& command,
-               std::vector<double>& command_val);
+  void Execute(MotorBase::MotorCommandType command,
+               const std::vector<double>& command_val = std::vector<double>());
 
   void Run();
 

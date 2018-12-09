@@ -72,6 +72,7 @@ InterfaceContext::InterfaceContext(const char* interface_config_file) {
   daemon_opts_.ident = strdup(params.daemon_identifier_);
   daemon_opts_.daemonize = params.daemonize_;
   daemon_opts_.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_opts_.skip_sighandler = true;
   somatic_verbprintf_prefix = daemon_opts_.ident;
   std::memset(&daemon_, 0, sizeof(daemon_));
   somatic_d_init(&daemon_, &daemon_opts_);
@@ -130,6 +131,106 @@ void InterfaceContext::Destroy() {
   somatic_d_destroy(&daemon_);
 }
 
+WorldInterface::WorldInterface(InterfaceContext& interface_context,
+                               std::string channel) {
+  daemon_ = &interface_context.daemon_;
+  somatic_d_channel_open(daemon_, &cmd_chan_, channel.c_str(), NULL);
+  ach_flush(&cmd_chan_);
+  wait_time_ = (struct timespec){
+      .tv_sec = 0,
+      .tv_nsec = (long int)((1.0 / interface_context.frequency_) * 1e9)};
+}
+
+void WorldInterface::Destroy() {
+  std::cout << "destroy world interface" << std::endl;
+  ach_close(&cmd_chan_);
+}
+
+WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
+  // Temporary to be returned
+  SimCmd sim_cmd;
+
+  // The absolute time when receive should give up waiting
+  struct timespec currTime;
+  clock_gettime(CLOCK_MONOTONIC, &currTime);
+  struct timespec abstime = aa_tm_add(wait_time_, currTime);
+
+  /// Read current state from state channel
+  int r;
+  Somatic__SimCmd* cmd =
+      SOMATIC_D_GET(&r, somatic__sim_cmd, daemon_, &cmd_chan_, &abstime,
+                    ACH_O_WAIT | ACH_O_LAST);
+
+  // Check message reception
+  somatic_d_check(
+      daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
+      SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
+      ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) || ACH_TIMEOUT == r,
+      "ReceiveCommand", "world interface, ach result: %s",
+      ach_result_to_string((ach_status_t)r));
+
+  // If the message has timed out, do nothing
+  if (r == ACH_TIMEOUT) {
+    sim_cmd = kDoNothing;
+  }
+
+  // Validate the message
+  else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) {
+    // Check if the message has one of the expected parameters
+    int goodParam = (SOMATIC__SIM_CMD__CODE__RESET == cmd->cmd ||
+                     SOMATIC__SIM_CMD__CODE__STEP == cmd->cmd);
+
+    // Check if the command has the right number of parameters if pos, vel or
+    // current
+    int goodValues = (((cmd->xyz && cmd->xyz->n_data == 3) &&
+                       (cmd->q_left_arm && cmd->q_left_arm->n_data == 7) &&
+                       (cmd->q_right_arm && cmd->q_right_arm->n_data == 7) &&
+                       (cmd->q_camera&& cmd->q_camera->n_data == 2)) ||
+                      SOMATIC__SIM_CMD__CODE__STEP == cmd->cmd);
+
+    // Use somatic interface to combine the finalize the checks in case there is
+    // an error
+    int somGoodParam = somatic_d_check_msg(
+        daemon_, goodParam, "sim_cmd", "invalid sim code, val: %d", cmd->cmd);
+    int somGoodValues = somatic_d_check_msg(
+        daemon_, goodValues, "sim_cmd",
+        "wrong vector size(s): %d, %d, %d, %d, wanted %d, %d, %d, %d",
+        cmd->xyz->n_data, cmd->q_left_arm->n_data, cmd->q_right_arm->n_data,
+        cmd->q_camera, 3, 7, 7, 2);
+
+    // If both good parameter and values, execute the command; otherwise just
+    // update the state
+    if (somGoodParam && somGoodValues) {
+      switch (cmd->cmd) {
+        case SOMATIC__SIM_CMD__CODE__STEP: {
+          sim_cmd = kStep;
+          break;
+        }
+        case SOMATIC__SIM_CMD__CODE__RESET: {
+          pose_params_.heading_init = cmd->heading;
+          pose_params_.q_base_init = cmd->q_base;
+          for (int i = 0; i < 3; i++) pose_params_.xyz_init(i) = cmd->xyz->data[i];
+          pose_params_.q_lwheel_init = cmd->q_lwheel;
+          pose_params_.q_rwheel_init = cmd->q_rwheel;
+          pose_params_.q_waist_init = cmd->q_waist;
+          pose_params_.q_torso_init = cmd->q_torso;
+          for (int i = 0; i < 7; i++)
+            pose_params_.q_left_arm_init(i) = cmd->q_left_arm->data[i];
+          for (int i = 0; i < 7; i++)
+            pose_params_.q_right_arm_init(i) = cmd->q_right_arm->data[i];
+          pose_params_.init_with_balance_pose = false;
+          sim_cmd = kReset;
+          break;
+        }
+      }
+    } else {
+      sim_cmd = kDoNothing;
+    }
+  }
+  aa_mem_region_release(&daemon_->memreg);
+  return sim_cmd;
+}
+
 FloatingBaseStateSensorInterface::FloatingBaseStateSensorInterface(
     FloatingBaseStateSensor* sensor, InterfaceContext& interface_context,
     std::string& sensor_state_channel)
@@ -140,6 +241,7 @@ FloatingBaseStateSensorInterface::FloatingBaseStateSensorInterface(
   daemon_opts.ident = strdup(name);
   daemon_opts.daemonize = false;
   daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_opts.skip_sighandler = true;
   daemon_ = new somatic_d_t();
   std::memset(daemon_, 0, sizeof(somatic_d_t));
   somatic_d_init(daemon_, &daemon_opts);
@@ -185,6 +287,7 @@ SchunkMotorInterface::SchunkMotorInterface(
   daemon_opts.ident = strdup(motor_group_name.c_str());
   daemon_opts.daemonize = false;
   daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_opts.skip_sighandler = true;
   daemon_ = new somatic_d_t();
   std::memset(daemon_, 0, sizeof(somatic_d_t));
   somatic_d_init(daemon_, &daemon_opts);
@@ -259,7 +362,6 @@ void SchunkMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
     *command = MotorBase::kDoNothing;
-    return;
   }
 
   // Validate the message
@@ -319,6 +421,7 @@ void SchunkMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
       *command = MotorBase::kDoNothing;
     }
   }
+  aa_mem_region_release(&daemon_->memreg);
 }
 
 void SchunkMotorInterface::SendState() {
@@ -368,6 +471,7 @@ AmcMotorInterface::AmcMotorInterface(
   daemon_opts.ident = strdup(motor_group_name.c_str());
   daemon_opts.daemonize = false;
   daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_opts.skip_sighandler = true;
   daemon_ = new somatic_d_t();
   std::memset(daemon_, 0, sizeof(somatic_d_t));
   somatic_d_init(daemon_, &daemon_opts);
@@ -442,7 +546,6 @@ void AmcMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
     *command = MotorBase::kDoNothing;
-    return;
   }
 
   // Validate the message
@@ -478,6 +581,7 @@ void AmcMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
       *command = MotorBase::kDoNothing;
     }
   }
+  aa_mem_region_release(&daemon_->memreg);
 }
 
 void AmcMotorInterface::SendState() {
@@ -527,6 +631,7 @@ WaistMotorInterface::WaistMotorInterface(
   daemon_opts.ident = strdup(motor_group_name.c_str());
   daemon_opts.daemonize = false;
   daemon_opts.sched_rt = SOMATIC_D_SCHED_MOTOR;  // TODO: Is this needed?
+  daemon_opts.skip_sighandler = true;
   daemon_ = new somatic_d_t();
   std::memset(daemon_, 0, sizeof(somatic_d_t));
   somatic_d_init(daemon_, &daemon_opts);
@@ -601,7 +706,6 @@ void WaistMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
     *command = MotorBase::kDoNothing;
-    return;
   }
 
   // Validate the message
@@ -650,6 +754,7 @@ void WaistMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
       *command = MotorBase::kDoNothing;
     }
   }
+  aa_mem_region_release(&daemon_->memreg);
 }
 
 void WaistMotorInterface::SendState() {

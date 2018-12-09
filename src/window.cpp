@@ -41,7 +41,9 @@
  */
 #include "window.h"
 
-#include <dart/dart.hpp>              // dart::simulation::WorldPtr
+#include <dart/dart.hpp>  // dart::simulation::WorldPtr, dart::dynamics::SkeletonPtr
+#include "ach_interface.h"            // WorldInterface::SimCmd
+#include "dart_world.h"               // SetKrangInitPose()
 #include "robot_control_interface.h"  // RobotControlInterface
 
 MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
@@ -52,26 +54,50 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
 }
 
 void MyWindow::timeStepping() {
-  // Lock all mutexes
-  for (int i = 0; i < robot_control_interface_->motor_groups_.size(); i++) {
-    robot_control_interface_->motor_groups_[i]->robot_mutex_.lock();
-    std::cout << "locked motor group: " << i << std::endl;
-  }
-  for (int i = 0; i < robot_control_interface_->sensor_groups_.size(); i++) {
-    robot_control_interface_->sensor_groups_[i]->robot_mutex_.lock();
-    std::cout << "locked sensor group: " << i << std::endl;
+  std::cout << std::endl
+            << "                                                   world "
+               "receiving command";
+  WorldInterface::SimCmd sim_cmd =
+      robot_control_interface_->world_interface_->ReceiveCommand();
+  if (robot_control_interface_->external_timestepping_ == false ||
+      sim_cmd == WorldInterface::kStep) {
+    // Lock all mutexes
+    std::cout << std::endl
+              << "                                                   world "
+                 "locking mutex";
+    robot_control_interface_->MutexLock();
+
+    // Step the world through time
+    std::cout << std::endl
+              << "                                                   world "
+                 "timestepping";
+    SimWindow::timeStepping();
+
+    // Unlock all mutexes
+    std::cout << std::endl
+              << "                                                   world "
+                 "unlocking mutex";
+    robot_control_interface_->MutexUnlock();
   }
 
-  // Step the world through time
-  SimWindow::timeStepping();
+  if (sim_cmd == WorldInterface::kReset) {
+    // Lock all mutexes
+    robot_control_interface_->MutexLock();
 
-  // Unlock all mutexes
-  for (int i = 0; i < robot_control_interface_->motor_groups_.size(); i++) {
-    robot_control_interface_->motor_groups_[i]->robot_mutex_.unlock();
-    std::cout << "unlocked motor group: " << i << std::endl;
-  }
-  for (int i = 0; i < robot_control_interface_->sensor_groups_.size(); i++) {
-    robot_control_interface_->sensor_groups_[i]->robot_mutex_.unlock();
-    std::cout << "unlocked sensor group: " << i << std::endl;
+    // Set initial pose to the one commanded
+    dart::dynamics::SkeletonPtr robot = mWorld->getSkeleton("krang");
+    SetKrangInitPos(robot_control_interface_->world_interface_->pose_params_,
+                    robot);
+
+    // Set initial speeds to be zero
+    robot->setVelocities(Eigen::VectorXd::Zero(robot->getNumDofs()));
+
+    // Lock all joints
+    for (int i = 0; i < robot_control_interface_->motor_groups_.size(); i++) {
+      robot_control_interface_->motor_groups_[i]->Execute(MotorBase::kLock);
+    }
+
+    // Unlock all mutexes
+    robot_control_interface_->MutexUnlock();
   }
 }
