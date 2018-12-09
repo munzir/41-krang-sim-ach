@@ -42,6 +42,7 @@
 
 #include "sensor_group.h"
 
+#include <cstdlib>        // rand()
 #include <dart/dart.hpp>  // dart::dynamics
 #include <mutex>          // std::mutex
 #include <string>         // std::string
@@ -62,11 +63,20 @@ SensorGroup::SensorGroup(dart::dynamics::SkeletonPtr robot,
 }
 
 void SensorGroup::Run() {
+  int randnum = rand();
+  int randnum_mod_1000 = randnum % 1000;
+  bool debug = ((randnum_mod_1000) < 1);
+  if (debug)
+    std::cout << std::endl << "                 imu lock mutex " << randnum;
   robot_mutex_.lock();
   {
+    if (debug)
+      std::cout << std::endl << "               imu update " << randnum_mod_1000;
     sensor_->Update();
+    if (debug) std::cout << std::endl << "               imu send state";
     interface_->SendState();
   }
+  if (debug) std::cout << std::endl << "                 imu unlock mutex";
   robot_mutex_.unlock();
 }
 
@@ -81,6 +91,7 @@ void SensorGroup::InfiniteRun() {
 }
 
 void SensorGroup::Destroy() {
+  std::cout << std::endl << "imu destroy";
   run_mutex_.lock();
   run_ = false;
   run_mutex_.unlock();

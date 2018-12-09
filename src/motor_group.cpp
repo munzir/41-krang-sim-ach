@@ -76,8 +76,8 @@ void MotorGroup::Update() {
   for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Update();
 }
 
-void MotorGroup::Execute(MotorBase::MotorCommandType& command,
-                         std::vector<double>& command_val) {
+void MotorGroup::Execute(MotorBase::MotorCommandType command,
+                         const std::vector<double>& command_val) {
   switch (command) {
     case MotorBase::kLock: {
       for (int i = 0; i < motor_vector_.size(); i++) motor_vector_[i]->Lock();
@@ -110,21 +110,27 @@ void MotorGroup::Execute(MotorBase::MotorCommandType& command,
 
 void MotorGroup::Run() {
   // Receive command
+  std::cout << std::endl << interface_->name_ << " receiving command";
   interface_->ReceiveCommand(&command_, &command_val_);
 
+  std::cout << std::endl << interface_->name_ << " locking mutex";
   robot_mutex_.lock();
   {
     // Execute command
+    std::cout << std::endl << interface_->name_ << " executing command";
     if (command_ != MotorBase::kDoNothing) {
       Execute(command_, command_val_);
     }
 
     // Update state
+    std::cout << std::endl << interface_->name_ << " updating state";
     Update();
 
     // Send state
+    std::cout << std::endl << interface_->name_ << " sending state";
     interface_->SendState();
   }
+  std::cout << std::endl << interface_->name_ << " unlocking mutex";
   robot_mutex_.unlock();
 }
 

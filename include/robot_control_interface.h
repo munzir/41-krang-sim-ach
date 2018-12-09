@@ -63,6 +63,10 @@ class RobotControlInterface {
 
   void Run();
 
+  void MutexLock();
+
+  void MutexUnlock();
+
  public:
   bool external_timestepping_;
   WorldInterface* world_interface_;

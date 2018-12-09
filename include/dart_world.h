@@ -87,11 +87,15 @@ struct DartParams {
 
   // Position limit parameters
   KrangPositionLimitParams position_limit_params;
+
+  // render?
+  bool render;
 };
 
 //==============================================================================
 //// Create the world with objects loaded in desired initial configuration
-dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params);
+dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
+                                       bool* render);
 
 //==============================================================================
 //// Read parameters from the config file

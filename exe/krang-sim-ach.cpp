@@ -40,6 +40,7 @@
  * @brief Executable that runs krang simulation and allows other programs
  * to interact with the simulation via ach channels
  */
+#include <signal.h>  // signal()
 #include <stdlib.h>  // atexit()
 
 #include <dart/dart.hpp>  // dart::simulation::WorldPtr, glutInit(), glutMainLoop()
@@ -60,12 +61,20 @@
 RobotControlInterface* krang_ach;
 void ExitFunction() { krang_ach->Destroy(); }
 
+// The function to be called on pressing Ctrl+C. It calls exit(0), so that
+// program exits. Due to atexit(ExitFunction) program will exit after calling
+// ExitFunction() which will clean everything up
+void SigHandler(int sig) { exit(0); }
+
 //=============================================================================
 int main(int argc, char* argv[]) {
+  // Flag for rendering or not
+  bool render;
+
   // Creates world and loads all objects with desired initial configuration
   char path_to_dart_params[] =
       "/usr/local/share/krang-sim-ach/cfg/dart_params.cfg";
-  dart::simulation::WorldPtr world = CreateWorld(path_to_dart_params);
+  dart::simulation::WorldPtr world = CreateWorld(path_to_dart_params, &render);
 
   // Create interface that allows other programs to interface with out robot
   char path_to_motor_params[] =
@@ -84,16 +93,28 @@ int main(int argc, char* argv[]) {
   // Define exit function
   atexit(ExitFunction);
 
-  // Glut init
-  glutInit(&argc, argv);
+  if (render) {
+    // Glut init
+    glutInit(&argc, argv);
 
-  // Launch the window. Specify glut callback functions as methods of the window
-  // object
-  window.initWindow(1280, 720, "Krang Simulation with Ach");
+    // Launch the window. Specify glut callback functions as methods of the
+    // window object
+    window.initWindow(1280, 720, "Krang Simulation with Ach");
 
-  // Process events of the window rendering our simulation. This thread never
-  // returns. Calls exit(0) when the window is closed.
-  glutMainLoop();
+    // Process events of the window rendering our simulation. This thread never
+    // returns. Calls exit(0) when the window is closed.
+    glutMainLoop();
+  } else {
+    // Ctrl+C behavior
+    signal(SIGINT, SigHandler);
+
+    // timeStepping function contains the body of the code to be run in an
+    // infinite while loop. If we called initWindow this would be a callback
+    // function. Now we call it explicitly
+    while (true) {
+      window.timeStepping();
+    }
+  }
 
   return 0;
 }

@@ -43,6 +43,7 @@
 #ifndef KRANG_SIMULATION_ACH_INTERFACE_H_
 #define KRANG_SIMULATION_ACH_INTERFACE_H_
 
+#include "dart_world.h"                  // KrangInitPoseParams
 #include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
 #include "motor_base.h"   // MotorBase*, MotorBase::MotorCommandType,
 #include "sensor_base.h"  // SensorBase*
@@ -77,6 +78,21 @@ class InterfaceContext {
   double frequency_;
 };
 
+class WorldInterface {
+ public:
+  enum SimCmd { kStep = 0, kReset, kDoNothing };
+  WorldInterface(InterfaceContext& interface_context, std::string channel);
+  ~WorldInterface() { Destroy(); }
+  void Destroy();
+  SimCmd ReceiveCommand();
+  KrangInitPoseParams pose_params_;
+
+ private:
+  somatic_d_t* daemon_;
+  ach_channel_t cmd_chan_;
+  struct timespec wait_time_;
+};
+
 class SensorInterfaceBase {
  public:
   SensorInterfaceBase(){};
@@ -93,6 +109,7 @@ class MotorInterfaceBase {
                               std::vector<double>* command_val_) = 0;
   virtual void SendState() = 0;
   virtual void Destroy() = 0;
+  char name_[128];
 };
 
 class FloatingBaseStateSensorInterface : public SensorInterfaceBase {
@@ -129,7 +146,6 @@ class SchunkMotorInterface : public MotorInterfaceBase {
   const std::vector<MotorBase*>*
       motor_vector_ptr_;  // const because interface should only be able to read
                           // from the motor
-  char name_[128];
   somatic_d_t* daemon_;
   struct timespec wait_time_;
   size_t n_;  // module count
@@ -160,7 +176,6 @@ class AmcMotorInterface : public MotorInterfaceBase {
   const std::vector<MotorBase*>*
       motor_vector_ptr_;  // const because interface should only be able to read
                           // from the motor
-  char name_[128];
   somatic_d_t* daemon_;
   struct timespec wait_time_;
   size_t n_;  // module count
@@ -191,7 +206,6 @@ class WaistMotorInterface : public MotorInterfaceBase {
   const std::vector<MotorBase*>*
       motor_vector_ptr_;  // const because interface should only be able to read
                           // from the motor
-  char name_[128];
   somatic_d_t* daemon_;
   struct timespec wait_time_;
   size_t n_;  // module count

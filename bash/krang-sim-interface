@@ -21,6 +21,7 @@ LLWA_C='llwa-cmd'
 LLWA_S='llwa-state'
 TORSO_C='torso-cmd'
 TORSO_S='torso-state'
+SIM_C='sim-cmd'
 
 ACH_MODE=666 # better to use group permissions, but not worth it here
 
@@ -59,6 +60,7 @@ CreateAllAchChan() {
 	ach -o $ACH_MODE -1 -C $LLWA_S       -m 10 -n $((24*7 + 512)) || exit 1
 	ach -o $ACH_MODE -1 -C $TORSO_C      -m 10 -n $((8*1  + 512)) || exit 1
 	ach -o $ACH_MODE -1 -C $TORSO_S      -m 10 -n $((24*1 + 512)) || exit 1
+  ach -o $ACH_MODE -1 -C $SIM_C        -m 10 -n $((8*(3+7+7+2) + 512)) || exit 1
 }
 
 # ************************************************************************************************
@@ -80,6 +82,7 @@ DeleteAllAchChan()
 	ach -U $LLWA_S
 	ach -U $TORSO_C
 	ach -U $TORSO_S
+  ach -U $SIM_C
 }
 
 # ************************************************************************************************
@@ -178,6 +181,7 @@ case "$1" in
 # Stop all processes
 	'stop' )
 	    StopAllProcess
+	    DeleteAllAchChan
 	    ;;
 
 	'start' )
