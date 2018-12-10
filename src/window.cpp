@@ -57,6 +57,7 @@ void MyWindow::timeStepping() {
   std::cout << std::endl
             << "                                                   world "
                "receiving command";
+  std::cout.flush();
   WorldInterface::SimCmd sim_cmd =
       robot_control_interface_->world_interface_->ReceiveCommand();
   if (robot_control_interface_->external_timestepping_ == false ||
@@ -65,18 +66,21 @@ void MyWindow::timeStepping() {
     std::cout << std::endl
               << "                                                   world "
                  "locking mutex";
+    std::cout.flush();
     robot_control_interface_->MutexLock();
 
     // Step the world through time
     std::cout << std::endl
               << "                                                   world "
                  "timestepping";
+    std::cout.flush();
     SimWindow::timeStepping();
 
     // Unlock all mutexes
     std::cout << std::endl
               << "                                                   world "
                  "unlocking mutex";
+    std::cout.flush();
     robot_control_interface_->MutexUnlock();
   }
 

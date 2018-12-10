@@ -185,7 +185,7 @@ void RobotControlInterface::Destroy() {
   motor_groups_.clear();
   for (int i = 0; i < sensor_groups_.size(); i++) delete sensor_groups_[i];
   sensor_groups_.clear();
-  interface_context_.Destroy();
+  // interface_context_.Destroy();
 }
 void RobotControlInterface::Run() {
   for (int i = 0; i < motor_groups_.size(); i++) motor_groups_[i]->Run();
