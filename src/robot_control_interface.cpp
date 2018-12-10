@@ -66,7 +66,8 @@ RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
   external_timestepping_ = params.external_timestepping_;
 
   world_interface_ =
-      new WorldInterface(interface_context_, params.sim_control_channel_);
+      new WorldInterface(interface_context_, params.sim_control_channel_,
+                         params.sim_state_channel_);
 
   for (int i = 0; i < params.num_sensor_groups_; i++) {
     sensor_groups_.push_back(new SensorGroup(
@@ -101,6 +102,11 @@ void RobotControlInterface::ReadParams(const char* interface_config_file,
     params->sim_control_channel_ =
         std::string(cfg->lookupString(scope, "sim_control_channel"));
     std::cout << "sim_control_channel: " << params->sim_control_channel_
+              << std::endl;
+
+    params->sim_state_channel_ =
+        std::string(cfg->lookupString(scope, "sim_state_channel"));
+    std::cout << "sim_state_channel: " << params->sim_state_channel_
               << std::endl;
 
     params->num_motor_groups_ = cfg->lookupFloat(scope, "num_motor_groups");

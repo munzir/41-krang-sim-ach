@@ -81,16 +81,20 @@ class InterfaceContext {
 class WorldInterface {
  public:
   enum SimCmd { kStep = 0, kReset, kDoNothing };
-  WorldInterface(InterfaceContext& interface_context, std::string channel);
+  WorldInterface(InterfaceContext& interface_context, std::string cmd_channel,
+                 std::string state_channel);
   ~WorldInterface() { Destroy(); }
   void Destroy();
   SimCmd ReceiveCommand();
+  void SendDone();
   KrangInitPoseParams pose_params_;
 
  private:
   somatic_d_t* daemon_;
   ach_channel_t cmd_chan_;
+  ach_channel_t state_chan_;
   struct timespec wait_time_;
+  Somatic__SimMsg* sim_msg_;
 };
 
 class SensorInterfaceBase {

@@ -133,19 +133,25 @@ void InterfaceContext::Destroy() {
 }
 
 WorldInterface::WorldInterface(InterfaceContext& interface_context,
-                               std::string channel) {
+                               std::string cmd_channel,
+                               std::string state_channel) {
   daemon_ = &interface_context.daemon_;
-  somatic_d_channel_open(daemon_, &cmd_chan_, channel.c_str(), NULL);
+  somatic_d_channel_open(daemon_, &cmd_chan_, cmd_channel.c_str(), NULL);
   ach_flush(&cmd_chan_);
+  somatic_d_channel_open(daemon_, &state_chan_, state_channel.c_str(), NULL);
   wait_time_ = (struct timespec){
       .tv_sec = 0,
       .tv_nsec = (long int)((1.0 / interface_context.frequency_) * 1e9)};
+  sim_msg_ = somatic_sim_msg_alloc();
 }
 
 void WorldInterface::Destroy() {
   std::cout << "destroy world interface" << std::endl;
+  somatic_sim_msg_free(sim_msg_);
   ach_cancel(&cmd_chan_, NULL);
   ach_close(&cmd_chan_);
+  ach_cancel(&state_chan_, NULL);
+  ach_close(&state_chan_);
 }
 
 WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
@@ -158,64 +164,12 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
   struct timespec abstime = aa_tm_add(wait_time_, currTime);
 
   /// Read current state from state channel
-  std::cout << std::endl
-            << "                                                     world"
-               " enter SOMATIC_D_GET";
-  std::cout.flush();
-  //=========================================================================
   int r;
-  // Somatic__SimCmd* cmd =
-  //    SOMATIC_D_GET(&r, somatic__sim_cmd, daemon_, &cmd_chan_, &abstime,
-  //                  ACH_O_WAIT | ACH_O_LAST);
-  size_t _somatic_private_nread = 0;
-  // uint8_t* _somatic_private_buf =
-  //    (uint8_t*)somatic_d_get(daemon_, &cmd_chan_, &_somatic_private_nread,
-  //                            &abstime, ACH_O_WAIT | ACH_O_LAST, &r);
-  //------------------------------------------------------------------------
-  size_t fs;
-  while (1) {
-    fs = 0;
-    std::cout << std::endl
-              << "                                                     world"
-                 " ==== call ach_get";
-    std::cout.flush();
-    r = ach_get_loud(&cmd_chan_, aa_mem_region_ptr(&daemon_->tmpreg),
-                aa_mem_region_freesize(&daemon_->tmpreg), &fs, &abstime,
-                ACH_O_WAIT | ACH_O_LAST);
-    if (ACH_OVERFLOW != r) break;
-    std::cout << std::endl
-              << "                                                     world"
-                 " ==== tmpalloc";
-    std::cout.flush();
-    aa_mem_region_tmpalloc(&daemon_->tmpreg, _somatic_private_nread);
-  }
-  std::cout << std::endl
-            << "                                                     world"
-               " ==== allocate private buffer";
-  std::cout.flush();
-  _somatic_private_nread = fs;
-  uint8_t* _somatic_private_buf = (uint8_t*) aa_mem_region_ptr(&daemon_->tmpreg);
-  //------------------------------------------------------------------------
-  std::cout << std::endl
-            << "                                                     world"
-               " ==== assign Somatic__SimCmd*";
-  std::cout.flush();
   Somatic__SimCmd* cmd =
-      (_somatic_private_nread)
-          ? somatic__sim_cmd__unpack(&daemon_->pballoc, _somatic_private_nread,
-                                     _somatic_private_buf)
-          : NULL;
-  //===========================================================================
-  std::cout << std::endl
-            << "                                                     world"
-               " exit SOMATIC_D_GET";
-  std::cout.flush();
+      SOMATIC_D_GET(&r, somatic__sim_cmd, daemon_, &cmd_chan_, &abstime,
+                    ACH_O_WAIT | ACH_O_LAST);
 
   // Check message reception
-  std::cout << std::endl
-            << "                                                     world"
-               " check message reception";
-  std::cout.flush();
   somatic_d_check(
       daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
       SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
@@ -225,20 +179,12 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
 
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
-    std::cout << std::endl
-              << "                                                     world"
-                 " message timed out. do nothin";
-    std::cout.flush();
     sim_cmd = kDoNothing;
   }
 
   // Validate the message
   else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) {
     // Check if the message has one of the expected parameters
-    std::cout << std::endl
-              << "                                                     world"
-                 " Validating message";
-    std::cout.flush();
     int goodParam = (SOMATIC__SIM_CMD__CODE__RESET == cmd->cmd ||
                      SOMATIC__SIM_CMD__CODE__STEP == cmd->cmd);
 
@@ -263,10 +209,6 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
     // If both good parameter and values, execute the command; otherwise just
     // update the state
     if (somGoodParam && somGoodValues) {
-      std::cout << std::endl
-                << "                                                     world"
-                   " Valid Message. Execute";
-      std::cout.flush();
       switch (cmd->cmd) {
         case SOMATIC__SIM_CMD__CODE__STEP: {
           sim_cmd = kStep;
@@ -291,19 +233,20 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
         }
       }
     } else {
-      std::cout << std::endl
-                << "                                                     world"
-                   " Invalid Message. Do Nothing";
-      std::cout.flush();
       sim_cmd = kDoNothing;
     }
   }
-  std::cout << std::endl
-            << "                                                     world"
-               " Release memreg";
-  std::cout.flush();
   aa_mem_region_release(&daemon_->memreg);
   return sim_cmd;
+}
+
+void WorldInterface::SendDone() {
+  int done = 1;
+  somatic_sim_msg_set(sim_msg_, done);
+  ach_status_t r = SOMATIC_PACK_SEND(&state_chan_, somatic__sim_msg, sim_msg_);
+  somatic_d_check(daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
+                  SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT, ACH_OK == r,
+                  "SendDone", "sim, ach result: %s", ach_result_to_string(r));
 }
 
 FloatingBaseStateSensorInterface::FloatingBaseStateSensorInterface(
