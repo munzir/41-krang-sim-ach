@@ -77,6 +77,7 @@ class RobotControlInterface {
   struct RobotControlInterfaceParams {
     bool external_timestepping_;
     std::string sim_control_channel_;
+    std::string sim_state_channel_;
     int num_motor_groups_;
     std::vector<std::string> motor_group_names_;
     std::vector<std::vector<std::string>> motor_group_joints_;

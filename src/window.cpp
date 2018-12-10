@@ -54,34 +54,24 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
 }
 
 void MyWindow::timeStepping() {
-  std::cout << std::endl
-            << "                                                   world "
-               "receiving command";
-  std::cout.flush();
   WorldInterface::SimCmd sim_cmd =
       robot_control_interface_->world_interface_->ReceiveCommand();
   if (robot_control_interface_->external_timestepping_ == false ||
       sim_cmd == WorldInterface::kStep) {
     // Lock all mutexes
-    std::cout << std::endl
-              << "                                                   world "
-                 "locking mutex";
-    std::cout.flush();
     robot_control_interface_->MutexLock();
 
     // Step the world through time
-    std::cout << std::endl
-              << "                                                   world "
-                 "timestepping";
-    std::cout.flush();
     SimWindow::timeStepping();
 
     // Unlock all mutexes
-    std::cout << std::endl
-              << "                                                   world "
-                 "unlocking mutex";
-    std::cout.flush();
     robot_control_interface_->MutexUnlock();
+
+    // If this was due to external timestep command, send back acknowledgement
+    // that the job is done
+    if(robot_control_interface_->external_timestepping_) {
+      robot_control_interface_->world_interface_->SendDone();
+    }
   }
 
   if (sim_cmd == WorldInterface::kReset) {
@@ -103,5 +93,8 @@ void MyWindow::timeStepping() {
 
     // Unlock all mutexes
     robot_control_interface_->MutexUnlock();
+
+    // Send back acknowledgement that the job is done
+    robot_control_interface_->world_interface_->SendDone();
   }
 }

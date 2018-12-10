@@ -109,29 +109,22 @@ void MotorGroup::Execute(MotorBase::MotorCommandType command,
 }
 
 void MotorGroup::Run() {
-  bool debug = true;
   // Receive command
-  if(debug) std::cout << std::endl << interface_->name_ << " receiving command";
   interface_->ReceiveCommand(&command_, &command_val_);
 
-  if(debug) std::cout << std::endl << interface_->name_ << " locking mutex";
   robot_mutex_.lock();
   {
     // Execute command
-    if(debug) std::cout << std::endl << interface_->name_ << " executing command";
     if (command_ != MotorBase::kDoNothing) {
       Execute(command_, command_val_);
     }
 
     // Update state
-    if(debug) std::cout << std::endl << interface_->name_ << " updating state";
     Update();
 
     // Send state
-    if(debug) std::cout << std::endl << interface_->name_ << " sending state";
     interface_->SendState();
   }
-  if(debug) std::cout << std::endl << interface_->name_ << " unlocking mutex";
   robot_mutex_.unlock();
 }
 
