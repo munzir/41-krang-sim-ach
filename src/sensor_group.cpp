@@ -65,7 +65,7 @@ SensorGroup::SensorGroup(dart::dynamics::SkeletonPtr robot,
 void SensorGroup::Run() {
   int randnum = rand();
   int randnum_mod_1000 = randnum % 1000;
-  bool debug = ((randnum_mod_1000) < 1);
+  bool debug = true && ((randnum_mod_1000) < 1);
   if (debug)
     std::cout << std::endl << "                 imu lock mutex " << randnum;
   robot_mutex_.lock();

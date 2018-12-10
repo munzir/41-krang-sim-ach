@@ -59,12 +59,13 @@
 // pointer as a global variable to allow this function to access the
 // RobotControlInterface object that is to be destroyed.
 RobotControlInterface* krang_ach;
-void ExitFunction() { krang_ach->Destroy(); }
+void ExitFunction() { delete krang_ach; }
 
 // The function to be called on pressing Ctrl+C. It calls exit(0), so that
 // program exits. Due to atexit(ExitFunction) program will exit after calling
 // ExitFunction() which will clean everything up
-void SigHandler(int sig) { exit(0); }
+bool sig_received = false;
+void SigHandler(int sig) { sig_received = true; }
 
 //=============================================================================
 int main(int argc, char* argv[]) {
@@ -90,10 +91,10 @@ int main(int argc, char* argv[]) {
   // in the program. Hence, it is being provided with them all at construction
   MyWindow window(world, krang_ach);
 
-  // Define exit function
-  atexit(ExitFunction);
-
   if (render) {
+    // Define exit function
+    atexit(ExitFunction);
+
     // Glut init
     glutInit(&argc, argv);
 
@@ -111,9 +112,12 @@ int main(int argc, char* argv[]) {
     // timeStepping function contains the body of the code to be run in an
     // infinite while loop. If we called initWindow this would be a callback
     // function. Now we call it explicitly
-    while (true) {
+    while (!sig_received) {
       window.timeStepping();
     }
+
+    // Destroy robot control interface
+    delete krang_ach;
   }
 
   return 0;

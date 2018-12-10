@@ -123,6 +123,7 @@ void InterfaceContext::Run() {
 }
 
 void InterfaceContext::Destroy() {
+  std::cout << "destroy interface context" << std::endl;
   // Send a "stopping" notice on the event channel
   somatic_d_event(&daemon_, SOMATIC__EVENT__PRIORITIES__NOTICE,
                   SOMATIC__EVENT__CODES__PROC_STOPPING, NULL, NULL);
@@ -143,6 +144,7 @@ WorldInterface::WorldInterface(InterfaceContext& interface_context,
 
 void WorldInterface::Destroy() {
   std::cout << "destroy world interface" << std::endl;
+  ach_cancel(&cmd_chan_, NULL);
   ach_close(&cmd_chan_);
 }
 
@@ -156,12 +158,64 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
   struct timespec abstime = aa_tm_add(wait_time_, currTime);
 
   /// Read current state from state channel
+  std::cout << std::endl
+            << "                                                     world"
+               " enter SOMATIC_D_GET";
+  std::cout.flush();
+  //=========================================================================
   int r;
+  // Somatic__SimCmd* cmd =
+  //    SOMATIC_D_GET(&r, somatic__sim_cmd, daemon_, &cmd_chan_, &abstime,
+  //                  ACH_O_WAIT | ACH_O_LAST);
+  size_t _somatic_private_nread = 0;
+  // uint8_t* _somatic_private_buf =
+  //    (uint8_t*)somatic_d_get(daemon_, &cmd_chan_, &_somatic_private_nread,
+  //                            &abstime, ACH_O_WAIT | ACH_O_LAST, &r);
+  //------------------------------------------------------------------------
+  size_t fs;
+  while (1) {
+    fs = 0;
+    std::cout << std::endl
+              << "                                                     world"
+                 " ==== call ach_get";
+    std::cout.flush();
+    r = ach_get_loud(&cmd_chan_, aa_mem_region_ptr(&daemon_->tmpreg),
+                aa_mem_region_freesize(&daemon_->tmpreg), &fs, &abstime,
+                ACH_O_WAIT | ACH_O_LAST);
+    if (ACH_OVERFLOW != r) break;
+    std::cout << std::endl
+              << "                                                     world"
+                 " ==== tmpalloc";
+    std::cout.flush();
+    aa_mem_region_tmpalloc(&daemon_->tmpreg, _somatic_private_nread);
+  }
+  std::cout << std::endl
+            << "                                                     world"
+               " ==== allocate private buffer";
+  std::cout.flush();
+  _somatic_private_nread = fs;
+  uint8_t* _somatic_private_buf = (uint8_t*) aa_mem_region_ptr(&daemon_->tmpreg);
+  //------------------------------------------------------------------------
+  std::cout << std::endl
+            << "                                                     world"
+               " ==== assign Somatic__SimCmd*";
+  std::cout.flush();
   Somatic__SimCmd* cmd =
-      SOMATIC_D_GET(&r, somatic__sim_cmd, daemon_, &cmd_chan_, &abstime,
-                    ACH_O_WAIT | ACH_O_LAST);
+      (_somatic_private_nread)
+          ? somatic__sim_cmd__unpack(&daemon_->pballoc, _somatic_private_nread,
+                                     _somatic_private_buf)
+          : NULL;
+  //===========================================================================
+  std::cout << std::endl
+            << "                                                     world"
+               " exit SOMATIC_D_GET";
+  std::cout.flush();
 
   // Check message reception
+  std::cout << std::endl
+            << "                                                     world"
+               " check message reception";
+  std::cout.flush();
   somatic_d_check(
       daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
       SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
@@ -171,12 +225,20 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
 
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
+    std::cout << std::endl
+              << "                                                     world"
+                 " message timed out. do nothin";
+    std::cout.flush();
     sim_cmd = kDoNothing;
   }
 
   // Validate the message
   else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) {
     // Check if the message has one of the expected parameters
+    std::cout << std::endl
+              << "                                                     world"
+                 " Validating message";
+    std::cout.flush();
     int goodParam = (SOMATIC__SIM_CMD__CODE__RESET == cmd->cmd ||
                      SOMATIC__SIM_CMD__CODE__STEP == cmd->cmd);
 
@@ -185,7 +247,7 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
     int goodValues = (((cmd->xyz && cmd->xyz->n_data == 3) &&
                        (cmd->q_left_arm && cmd->q_left_arm->n_data == 7) &&
                        (cmd->q_right_arm && cmd->q_right_arm->n_data == 7) &&
-                       (cmd->q_camera&& cmd->q_camera->n_data == 2)) ||
+                       (cmd->q_camera && cmd->q_camera->n_data == 2)) ||
                       SOMATIC__SIM_CMD__CODE__STEP == cmd->cmd);
 
     // Use somatic interface to combine the finalize the checks in case there is
@@ -201,6 +263,10 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
     // If both good parameter and values, execute the command; otherwise just
     // update the state
     if (somGoodParam && somGoodValues) {
+      std::cout << std::endl
+                << "                                                     world"
+                   " Valid Message. Execute";
+      std::cout.flush();
       switch (cmd->cmd) {
         case SOMATIC__SIM_CMD__CODE__STEP: {
           sim_cmd = kStep;
@@ -209,7 +275,8 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
         case SOMATIC__SIM_CMD__CODE__RESET: {
           pose_params_.heading_init = cmd->heading;
           pose_params_.q_base_init = cmd->q_base;
-          for (int i = 0; i < 3; i++) pose_params_.xyz_init(i) = cmd->xyz->data[i];
+          for (int i = 0; i < 3; i++)
+            pose_params_.xyz_init(i) = cmd->xyz->data[i];
           pose_params_.q_lwheel_init = cmd->q_lwheel;
           pose_params_.q_rwheel_init = cmd->q_rwheel;
           pose_params_.q_waist_init = cmd->q_waist;
@@ -224,9 +291,17 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
         }
       }
     } else {
+      std::cout << std::endl
+                << "                                                     world"
+                   " Invalid Message. Do Nothing";
+      std::cout.flush();
       sim_cmd = kDoNothing;
     }
   }
+  std::cout << std::endl
+            << "                                                     world"
+               " Release memreg";
+  std::cout.flush();
   aa_mem_region_release(&daemon_->memreg);
   return sim_cmd;
 }
@@ -269,6 +344,7 @@ void FloatingBaseStateSensorInterface::SendState() {
 
 void FloatingBaseStateSensorInterface::Destroy() {
   // Clean up imu stuff
+  ach_cancel(&imu_chan_, NULL);
   ach_close(&imu_chan_);
   free(imu_msg_->data);
   free(imu_msg_);
@@ -453,7 +529,9 @@ void SchunkMotorInterface::SendState() {
 
 void SchunkMotorInterface::Destroy() {
   std::cout << "destroy " << name_ << std::endl;
+  ach_cancel(&cmd_chan_, NULL);
   ach_close(&cmd_chan_);
+  ach_cancel(&state_chan_, NULL);
   ach_close(&state_chan_);
   somatic_metadata_free(state_msg_.meta);
   somatic_d_destroy(daemon_);
@@ -612,8 +690,10 @@ void AmcMotorInterface::SendState() {
 }
 
 void AmcMotorInterface::Destroy() {
-  std::cout << "destroy " << name_ << std::endl;
+  std::cout << "dedtroy " << name_ << std::endl;
+  ach_cancel(&cmd_chan_, NULL);
   ach_close(&cmd_chan_);
+  ach_cancel(&state_chan_, NULL);
   ach_close(&state_chan_);
   somatic_metadata_free(state_msg_.meta);
   somatic_d_destroy(daemon_);
@@ -789,7 +869,9 @@ void WaistMotorInterface::SendState() {
 
 void WaistMotorInterface::Destroy() {
   std::cout << "destroy " << name_ << std::endl;
+  ach_cancel(&cmd_chan_, NULL);
   ach_close(&cmd_chan_);
+  ach_cancel(&state_chan_, NULL);
   ach_close(&state_chan_);
   somatic_metadata_free(state_msg_.meta);
   somatic_d_destroy(daemon_);
