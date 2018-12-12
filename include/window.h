@@ -52,13 +52,16 @@
 class MyWindow : public dart::gui::SimWindow {
  public:
   MyWindow(const dart::simulation::WorldPtr& world,
-           RobotControlInterface* robot_control_interface);
+           RobotControlInterface* robot_control_interface,
+           bool* sig_received);
+
   ~MyWindow() {}
 
   void timeStepping() override;
 
  public:
   RobotControlInterface* robot_control_interface_;
+  bool* sig_received_;
 };
 
 #endif  // KRANG_SIMULATION_WINDOW_H_
