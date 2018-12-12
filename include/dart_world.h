@@ -119,8 +119,14 @@ void SetKrangComParams(const char* com_params_path,
 
 //==============================================================================
 // Given all the initial pose parameters, sets the positions of krang
-void SetKrangInitPos(const KrangInitPoseParams& params,
-                     dart::dynamics::SkeletonPtr krang);
+void SetKrangInitPoseRaw(const KrangInitPoseParams& params,
+                         dart::dynamics::SkeletonPtr krang);
+
+//==============================================================================
+// Given all the initial pose parameters, sets the positions of krang
+// If init_with_balance_pose was requested, set the pose to balanced one
+void SetKrangInitPose(KrangInitPoseParams& params,
+                      dart::dynamics::SkeletonPtr krang);
 
 //==============================================================================
 // Calculating the axis angle representation of orientation from heading_init

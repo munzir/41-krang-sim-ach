@@ -59,16 +59,26 @@
 // pointer as a global variable to allow this function to access the
 // RobotControlInterface object that is to be destroyed.
 RobotControlInterface* krang_ach;
-void ExitFunction() { delete krang_ach; }
+void ExitFunction() { krang_ach->Destroy(); }
 
-// The function to be called on pressing Ctrl+C. It calls exit(0), so that
-// program exits. Due to atexit(ExitFunction) program will exit after calling
-// ExitFunction() which will clean everything up
+// The function to be called on pressing Ctrl+C. It sets the flag sig_received,
+// so that the main loop knows based on this flag that the program needs to
+// exit so it calls exit(0). Due to atexit(ExitFunction), exit(0) call will lead
+// to calling the ExitFunction() which will clean everything up. We don't
+// directly call exit(0) inside SigHandler because we want control to return to
+// the main loop and release any ach mutexes first. Then, when it's clean to do
+// so, call exit(0) based on the status of sig_received.
 bool sig_received = false;
 void SigHandler(int sig) { sig_received = true; }
 
 //=============================================================================
 int main(int argc, char* argv[]) {
+  // Ctrl+C behavior
+  signal(SIGINT, SigHandler);
+
+  // Define exit function
+  atexit(ExitFunction);
+
   // Flag for rendering or not
   bool render;
 
@@ -89,12 +99,9 @@ int main(int argc, char* argv[]) {
   // The window object that has all the callback functions defined which are
   // executed during simulation. It therefore needs access to all other objects
   // in the program. Hence, it is being provided with them all at construction
-  MyWindow window(world, krang_ach);
+  MyWindow window(world, krang_ach, &sig_received);
 
   if (render) {
-    // Define exit function
-    atexit(ExitFunction);
-
     // Glut init
     glutInit(&argc, argv);
 
@@ -106,18 +113,13 @@ int main(int argc, char* argv[]) {
     // returns. Calls exit(0) when the window is closed.
     glutMainLoop();
   } else {
-    // Ctrl+C behavior
-    signal(SIGINT, SigHandler);
-
     // timeStepping function contains the body of the code to be run in an
-    // infinite while loop. If we called initWindow this would be a callback
-    // function. Now we call it explicitly
-    while (!sig_received) {
+    // infinite while loop. When rendering, the call to initWindow makes this a
+    // callback function. Here, when not rendering, we call this function
+    // explicitly
+    while (true) {
       window.timeStepping();
     }
-
-    // Destroy robot control interface
-    delete krang_ach;
   }
 
   return 0;

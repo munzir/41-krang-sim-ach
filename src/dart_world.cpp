@@ -282,21 +282,7 @@ dart::dynamics::SkeletonPtr CreateKrang(DartParams& params) {
   SetKrangComParams(params.com_params_path, krang);
 
   // Set the positions
-  std::cout << " setting krang init pose ... " << std::endl;
-  SetKrangInitPos(params.init_pose_params, krang);
-  std::cout << " done setting krang init pose ... " << std::endl << std::endl;
-
-  // If balanced init pose is required
-  if (params.init_pose_params.init_with_balance_pose) {
-    Eigen::Vector3d COM;
-    COM = krang->getCOM() - params.init_pose_params.xyz_init;
-    double th = atan2(COM(0), COM(2));
-
-    // Adjust q_base_init to bring COM on top of wheels and set the positions
-    // again
-    params.init_pose_params.q_base_init -= th;
-    SetKrangInitPos(params.init_pose_params, krang);
-  }
+  SetKrangInitPose(params.init_pose_params, krang);
 
   // Set position limits
   std::cout << " setting krang joint position limits ... " << std::endl;
@@ -345,8 +331,8 @@ void SetKrangComParams(const char* com_params_path,
 
 //==============================================================================
 // Given all the initial pose parameters, sets the positions of krang
-void SetKrangInitPos(const KrangInitPoseParams& params,
-                     dart::dynamics::SkeletonPtr krang) {
+void SetKrangInitPoseRaw(const KrangInitPoseParams& params,
+                         dart::dynamics::SkeletonPtr krang) {
   Eigen::AngleAxisd aa;
   aa = GetKrangBaseAngleAxis(params.heading_init, params.q_base_init);
   Eigen::Matrix<double, 6, 1> q_base;
@@ -365,6 +351,27 @@ void SetKrangInitPos(const KrangInitPoseParams& params,
         ->setPosition(0, params.q_left_arm_init(i));
     krang->getJoint(right_arm_joint_names[i])
         ->setPosition(0, params.q_right_arm_init(i));
+  }
+}
+
+//==============================================================================
+// Given all the initial pose parameters, sets the positions of krang
+// If init_with_balance_pose was requested, set the pose to balanced one
+void SetKrangInitPose(KrangInitPoseParams& params,
+                      dart::dynamics::SkeletonPtr krang) {
+  // Set the positions
+  SetKrangInitPoseRaw(params, krang);
+
+  // If balanced init pose is required
+  if (params.init_with_balance_pose) {
+    Eigen::Vector3d COM;
+    COM = krang->getCOM() - params.xyz_init;
+    double th = atan2(COM(0), COM(2));
+
+    // Adjust q_base_init to bring COM on top of wheels and set the positions
+    // again
+    params.q_base_init -= th;
+    SetKrangInitPoseRaw(params, krang);
   }
 }
 

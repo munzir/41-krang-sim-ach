@@ -227,7 +227,7 @@ WorldInterface::SimCmd WorldInterface::ReceiveCommand() {
             pose_params_.q_left_arm_init(i) = cmd->q_left_arm->data[i];
           for (int i = 0; i < 7; i++)
             pose_params_.q_right_arm_init(i) = cmd->q_right_arm->data[i];
-          pose_params_.init_with_balance_pose = false;
+          pose_params_.init_with_balance_pose = cmd->init_with_balance_pose;
           sim_cmd = kReset;
           break;
         }

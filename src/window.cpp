@@ -47,10 +47,14 @@
 #include "robot_control_interface.h"  // RobotControlInterface
 
 MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
-                   RobotControlInterface* robot_control_interface)
+                   RobotControlInterface* robot_control_interface,
+                   bool* sig_received)
     : robot_control_interface_(robot_control_interface) {
   // Attach the world passed in the input argument to the window
   setWorld(world);
+
+  // Flag set when Ctrl-C is pressed
+  sig_received_ = sig_received;
 }
 
 void MyWindow::timeStepping() {
@@ -69,7 +73,7 @@ void MyWindow::timeStepping() {
 
     // If this was due to external timestep command, send back acknowledgement
     // that the job is done
-    if(robot_control_interface_->external_timestepping_) {
+    if (robot_control_interface_->external_timestepping_) {
       robot_control_interface_->world_interface_->SendDone();
     }
   }
@@ -80,8 +84,8 @@ void MyWindow::timeStepping() {
 
     // Set initial pose to the one commanded
     dart::dynamics::SkeletonPtr robot = mWorld->getSkeleton("krang");
-    SetKrangInitPos(robot_control_interface_->world_interface_->pose_params_,
-                    robot);
+    SetKrangInitPose(robot_control_interface_->world_interface_->pose_params_,
+                     robot);
 
     // Set initial speeds to be zero
     robot->setVelocities(Eigen::VectorXd::Zero(robot->getNumDofs()));
@@ -97,4 +101,6 @@ void MyWindow::timeStepping() {
     // Send back acknowledgement that the job is done
     robot_control_interface_->world_interface_->SendDone();
   }
+
+  if (*sig_received_) exit(0);
 }
