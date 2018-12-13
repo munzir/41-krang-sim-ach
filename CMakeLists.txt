@@ -42,6 +42,7 @@ include_directories(include)
 include_directories(${DART_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/krang-sim-ach)
 
 # Collect the source, script and fortran files
 file(GLOB main_source "src/*.cpp")
@@ -49,8 +50,8 @@ file(GLOB scripts_source "exe/*.cpp")
 list(SORT scripts_source)
 
 # Build the library and set the executables that use it (have to hardcode for now)
-add_library(Main SHARED ${main_source})
-set(MainDependents krang_sim_ach)
+add_library(krangsimach SHARED ${main_source})
+set(krangsimachDependents krang_sim_ach)
 
 # Build scripts
 message(STATUS "\n-- SCRIPTS: ")
@@ -58,8 +59,17 @@ foreach(script_src_file ${scripts_source})
 	get_filename_component(script_base ${script_src_file} NAME_WE)
 	message(STATUS "Adding script ${script_src_file} with base name ${script_base}" )
 	add_executable(${script_base} ${script_src_file})
-	target_link_libraries(${script_base} Main)
+	target_link_libraries(${script_base} krangsimach)
 	target_link_libraries(${script_base} ${DART_LIBRARIES} ${wxWidgets_LIBRARIES})
 	add_custom_target(${script_base}.run ${script_base} ${ARGN})
 endforeach(script_src_file)
+
+# Install
+install(TARGETS krangsimach DESTINATION /usr/local/lib)
+FILE(GLOB headers "include/krang-sim-ach/*.h" "include/krang-sim-ach/*.hpp")
+install(FILES ${headers} DESTINATION /usr/local/include/krang-sim-ach)
+install(DIRECTORY cfg DESTINATION /usr/local/share/krang-sim-ach)
+install(PROGRAMS bash/krang-sim-interface DESTINATION /etc/init.d)
+install(PROGRAMS build/krang-sim-ach DESTINATION /usr/local/bin)
+
 message(STATUS " ")

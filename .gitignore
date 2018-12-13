@@ -32,22 +32,24 @@
 # include
 !/include/
 /include/*
-!/include/window.h
-!/include/sim_config.h
-!/include/ach_utils.h
-!/include/motor.h
-!/include/dart_world.h
-!/include/robot_control_interface.h
-!/include/sensor_group.h
-!/include/motor_group.h
-!/include/sensor_base.h
-!/include/motor_base.h
-!/include/floating_base_state_sensor.h
-!/include/ach_interface.h
-!/include/schunk_motor.h
-!/include/amc_motor.h
-!/include/waist_motor.h
-!/include/file_ops.hpp
+!/include/krang-sim-ach/
+/include/krang-sim-ach/*
+!/include/krang-sim-ach/window.h
+!/include/krang-sim-ach/sim_config.h
+!/include/krang-sim-ach/ach_utils.h
+!/include/krang-sim-ach/motor.h
+!/include/krang-sim-ach/dart_world.h
+!/include/krang-sim-ach/robot_control_interface.h
+!/include/krang-sim-ach/sensor_group.h
+!/include/krang-sim-ach/motor_group.h
+!/include/krang-sim-ach/sensor_base.h
+!/include/krang-sim-ach/motor_base.h
+!/include/krang-sim-ach/floating_base_state_sensor.h
+!/include/krang-sim-ach/ach_interface.h
+!/include/krang-sim-ach/schunk_motor.h
+!/include/krang-sim-ach/amc_motor.h
+!/include/krang-sim-ach/waist_motor.h
+!/include/krang-sim-ach/file_ops.hpp
 
 # src
 !/src/
