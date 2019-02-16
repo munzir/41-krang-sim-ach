@@ -49,7 +49,7 @@
 
 #include "robot_control_interface.h"  // RobotControlInterface
 
-class MyWindow : public dart::gui::SimWindow {
+class MyWindow : public dart::gui::glut::SimWindow {
  public:
   MyWindow(const dart::simulation::WorldPtr& world,
            RobotControlInterface* robot_control_interface,
