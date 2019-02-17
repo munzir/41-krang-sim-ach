@@ -76,6 +76,9 @@ dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
   dart::dynamics::SkeletonPtr robot = CreateKrang(params);
   world->addSkeleton(robot);
 
+  // Time step
+  world->setTimeStep(params.time_step);
+
   // Render?
   *render = params.render;
 
@@ -97,6 +100,10 @@ void ReadDartParams(const char* config_file, DartParams* params) {
   try {
     // Parse the cfg file
     cfg->parse(config_file);
+
+    // Read time step
+    params->time_step = cfg->lookupFloat(scope, "time_step");
+    std::cout << "time_step: " << params->time_step << std::endl;
 
     // Read the path to Krang urdf file
     strcpy(params->krang_urdf_path,
