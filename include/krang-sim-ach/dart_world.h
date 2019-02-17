@@ -76,6 +76,9 @@ struct KrangPositionLimitParams {
 };
 
 struct DartParams {
+  // Time step
+  double time_step;
+
   // Path to URDF file
   char krang_urdf_path[1024];
 
