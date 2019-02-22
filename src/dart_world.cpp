@@ -47,6 +47,7 @@
 #include <stdio.h>                     // std::cout
 #include <string.h>                    // strcpy()
 #include <Eigen/Eigen>                 // Eigen::
+#include <cstring>                     // strlen
 #include <dart/dart.hpp>               // dart::dynamics, dart::simulation
 #include <dart/utils/urdf/urdf.hpp>    // dart::utils::DartLoader
 #include <iostream>                    // std::istringstream
@@ -286,7 +287,10 @@ dart::dynamics::SkeletonPtr CreateKrang(DartParams& params) {
   krang->setName("krang");
 
   // Set CoM parameters
-  SetKrangComParams(params.com_params_path, krang);
+  if (strlen(params.com_params_path) != 0)
+    SetKrangComParams(params.com_params_path, krang);
+  else
+    std::cout << "Using default com parameters" << std::endl;
 
   // Set the positions
   SetKrangInitPose(params.init_pose_params, krang);
