@@ -68,12 +68,6 @@ void MyWindow::timeStepping() {
     // Step the world through time
     SimWindow::timeStepping();
 
-    // Akash made this edit to check "actual" robot com
-    std::cout << "Actual Robot COM: "
-              << mWorld->getSkeleton("krang")->getCOM() -
-                     mWorld->getSkeleton("krang")->getPositions().segment(3, 3)
-              << std::endl;
-
     // Unlock all mutexes
     robot_control_interface_->MutexUnlock();
 
