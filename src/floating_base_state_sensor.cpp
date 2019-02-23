@@ -89,7 +89,9 @@ void FloatingBaseStateSensor::Update() {
   gravity_direction_.x_ = gravity_direction_wrt_imu(0);
   gravity_direction_.y_ = gravity_direction_wrt_imu(1);
   gravity_direction_.z_ = gravity_direction_wrt_imu(2);
-  angular_velocity_.x_ = base_ang_vel_wrt_imu(0);
-  angular_velocity_.y_ = base_ang_vel_wrt_imu(1);
-  angular_velocity_.z_ = base_ang_vel_wrt_imu(2);
+
+  // The negatives make it work. TODO: Investigate why?
+  angular_velocity_.x_ = -base_ang_vel_wrt_imu(0);
+  angular_velocity_.y_ = -base_ang_vel_wrt_imu(1);
+  angular_velocity_.z_ = -base_ang_vel_wrt_imu(2);
 }
