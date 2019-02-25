@@ -88,8 +88,6 @@ AmcMotor::AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
                                 1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
   joint_->setVelocityLowerLimit(0,
                                 -1.5 * rated_speed_ * kRadiansPerSecondPerRpm);
-  joint_->setDampingCoefficient(0, viscous_friction_);
-
   CurrentCmd(0.0);
 }
 
@@ -148,9 +146,6 @@ void AmcMotor::ReadParams(const char* motor_param_file) {
 
     max_backlash_ = cfg->lookupFloat(scope, "max_backlash");
     std::cout << "max_backlash: " << max_backlash_ << std::endl;
-
-    viscous_friction_ = cfg->lookupFloat(scope, "viscous_friction");
-    std::cout << "viscous_friction: " << viscous_friction_ << std::endl;
 
     max_input_current_ = cfg->lookupFloat(scope, "max_input_current");
     std::cout << "max_input_current: " << max_input_current_ << std::endl;
