@@ -88,7 +88,6 @@ class AmcMotor : public MotorBase {
   double max_backlash_;
 
   // Cooked up by us
-  double viscous_friction_;
   double max_input_current_;
 
   void ReadParams(const char* motor_param_file);
