@@ -51,6 +51,8 @@
 #include "ach_interface.h"  // InterfaceContext, SensorInterfaceBase
 #include "sensor_base.h"    // SensorBase, sensor::
 
+namespace krang_sim_ach {
+
 SensorGroup::SensorGroup(dart::dynamics::SkeletonPtr robot,
                          InterfaceContext& interface_context,
                          std::string& sensor_group_name,
@@ -91,3 +93,5 @@ void SensorGroup::Destroy() {
   sensor_->Destroy();
   interface_->Destroy();
 }
+
+} // namespace krang_sim_ach

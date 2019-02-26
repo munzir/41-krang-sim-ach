@@ -48,6 +48,8 @@
 #include <dart/dart.hpp>  // dart::dynamics::
 #include <string>         // std::string
 
+namespace krang_sim_ach {
+
 class AmcMotor : public MotorBase {
  public:
   AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
@@ -93,4 +95,6 @@ class AmcMotor : public MotorBase {
   void ReadParams(const char* motor_param_file);
   double reference_current_;
 };
+
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_AMC_MOTOR_H_

@@ -56,6 +56,8 @@
 #include "motor_group.h"    // FindMotorType, MotorGroup()
 #include "sensor_group.h"   // FindSensorType, SensorGroup()
 
+namespace krang_sim_ach {
+
 RobotControlInterface::RobotControlInterface(dart::dynamics::SkeletonPtr robot,
                                              const char* motor_config_file,
                                              const char* interface_config_file)
@@ -214,3 +216,5 @@ void RobotControlInterface::MutexUnlock() {
     sensor_groups_[i]->robot_mutex_.unlock();
   }
 }
+
+} // namespace krang_sim_ach

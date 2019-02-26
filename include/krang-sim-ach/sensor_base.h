@@ -46,6 +46,8 @@
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
 
+namespace krang_sim_ach {
+
 class SensorBase {
  public:
   SensorBase() {};
@@ -58,4 +60,7 @@ namespace sensor {
   SensorBase* Create(dart::dynamics::SkeletonPtr robot,
                      std::string & sensor_group_name);
 }
+
+} // namespace krang_sim_ach
+
 #endif  // KRANG_SIMULATION_SENSOR_BASE_H_

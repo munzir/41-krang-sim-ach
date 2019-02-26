@@ -57,6 +57,10 @@
 
 #include "file_ops.hpp"  // readInputFileAsMatrix()
 
+namespace krang_sim_ach {
+
+namespace dart_world {
+
 //==============================================================================
 //// Create the world with objects loaded in desired initial configuration
 dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
@@ -426,3 +430,7 @@ void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
         ->setPositionUpperLimit(0, params.bending_joint_max);
   }
 }
+
+} // dart_world
+
+} // namespace krang_sim_ach

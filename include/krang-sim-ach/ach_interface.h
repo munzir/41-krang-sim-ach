@@ -43,7 +43,7 @@
 #ifndef KRANG_SIMULATION_ACH_INTERFACE_H_
 #define KRANG_SIMULATION_ACH_INTERFACE_H_
 
-#include "dart_world.h"                  // KrangInitPoseParams
+#include "dart_world.h"                  // dart_world::KrangInitPoseParams
 #include "floating_base_state_sensor.h"  // FloatingBaseStateSensor
 #include "motor_base.h"   // MotorBase*, MotorBase::MotorCommandType,
 #include "sensor_base.h"  // SensorBase*
@@ -59,6 +59,8 @@
 #include <mutex>   // std::mutex
 #include <string>  // std::string
 #include <vector>  // std::vector
+
+namespace krang_sim_ach {
 
 class InterfaceContext {
  public:
@@ -87,7 +89,7 @@ class WorldInterface {
   void Destroy();
   SimCmd ReceiveCommand();
   void SendDone();
-  KrangInitPoseParams pose_params_;
+  dart_world::KrangInitPoseParams pose_params_;
 
  private:
   somatic_d_t* daemon_;
@@ -235,4 +237,6 @@ MotorInterfaceBase* Create(std::vector<MotorBase*>& motor_vector,
                            std::string& motor_group_command_channel_name,
                            std::string& motor_group_state_channel_name);
 }  // namespace interface
+
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_ACH_INTERFACE_H_

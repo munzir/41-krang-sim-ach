@@ -48,6 +48,8 @@
 #include <dart/dart.hpp>  // dart::dynamics
 #include <string>         // std::string
 
+namespace krang_sim_ach {
+
 SensorBase* sensor::Create(dart::dynamics::SkeletonPtr robot,
                            std::string& sensor_group_name) {
   if (!sensor_group_name.compare("floating-base-state")) {
@@ -56,3 +58,5 @@ SensorBase* sensor::Create(dart::dynamics::SkeletonPtr robot,
     assert(false && "Sensor name not listed");
   }
 }
+
+} // namespace krang_sim_ach

@@ -52,6 +52,8 @@
 #include <thread>         // std::thread
 #include <vector>         // std::vector
 
+namespace krang_sim_ach {
+
 MotorGroup::MotorGroup(dart::dynamics::SkeletonPtr robot,
                        InterfaceContext& interface_context,
                        std::string& motor_group_name,
@@ -149,3 +151,5 @@ void MotorGroup::Destroy() {
   command_val_.clear();
   interface_->Destroy();
 }
+
+} // namespace krang_sim_ach

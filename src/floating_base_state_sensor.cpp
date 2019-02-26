@@ -43,6 +43,8 @@
 
 #include "floating_base_state_sensor.h"
 
+namespace krang_sim_ach {
+
 void FloatingBaseStateSensor::Update() {
   // We define a frame of reference "imu". Origin on the center of the physical
   // imu, x, y and z axes along the -y, +z and -x axes of the physical imu
@@ -95,3 +97,5 @@ void FloatingBaseStateSensor::Update() {
   angular_velocity_.y_ = -base_ang_vel_wrt_imu(1);
   angular_velocity_.z_ = -base_ang_vel_wrt_imu(2);
 }
+
+} // namespace krang_sim_ach

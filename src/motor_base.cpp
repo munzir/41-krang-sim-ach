@@ -53,6 +53,8 @@
 #include <string>                      // std::string
 #include <vector>                      // std::vector
 
+namespace krang_sim_ach {
+
 MotorBase* motor::Create(dart::dynamics::SkeletonPtr robot,
                          std::string& joint_name,
                          const char* motor_config_file) {
@@ -81,3 +83,5 @@ MotorBase* motor::Create(dart::dynamics::SkeletonPtr robot,
     assert(false && "Motor name not listed");
   }
 }
+
+} // namespace krang_sim_ach

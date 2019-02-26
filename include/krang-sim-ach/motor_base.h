@@ -47,6 +47,8 @@
 #include <string>         // std::string
 #include <vector>         // std::vector
 
+namespace krang_sim_ach {
+
 class MotorBase {
  public:
   enum MotorCommandType {
@@ -76,4 +78,7 @@ namespace motor {
 MotorBase* Create(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
                   const char* motor_config_file);
 }
+
+} // namespace krang_sim_ach
+
 #endif  // KRANG_SIMULATION_MOTOR_BASE_H_

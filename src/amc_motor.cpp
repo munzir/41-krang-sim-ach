@@ -50,6 +50,8 @@
 #include <sstream>                     // istringstream
 #include <string>                      // std::string
 
+namespace krang_sim_ach {
+
 AmcMotor::AmcMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
                    const char* motor_config_file) {
   joint_ = robot->getJoint(joint_name);
@@ -190,3 +192,6 @@ double AmcMotor::GetCurrent() {
 }
 
 std::string AmcMotor::GetMotorType() { return "amc"; }
+
+} // namespace krang_sim_ach
+

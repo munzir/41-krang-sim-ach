@@ -43,8 +43,10 @@
 
 #include <dart/dart.hpp>  // dart::simulation::WorldPtr, dart::dynamics::SkeletonPtr
 #include "ach_interface.h"            // WorldInterface::SimCmd
-#include "dart_world.h"               // SetKrangInitPose()
+#include "dart_world.h"               // dart_world::SetKrangInitPose()
 #include "robot_control_interface.h"  // RobotControlInterface
+
+namespace krang_sim_ach {
 
 MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
                    RobotControlInterface* robot_control_interface,
@@ -84,8 +86,8 @@ void MyWindow::timeStepping() {
 
     // Set initial pose to the one commanded
     dart::dynamics::SkeletonPtr robot = mWorld->getSkeleton("krang");
-    SetKrangInitPose(robot_control_interface_->world_interface_->pose_params_,
-                     robot);
+    dart_world::SetKrangInitPose(
+        robot_control_interface_->world_interface_->pose_params_, robot);
 
     // Set initial speeds to be zero
     robot->setVelocities(Eigen::VectorXd::Zero(robot->getNumDofs()));
@@ -104,3 +106,5 @@ void MyWindow::timeStepping() {
 
   if (*sig_received_) exit(0);
 }
+
+}  // namespace krang_sim_ach

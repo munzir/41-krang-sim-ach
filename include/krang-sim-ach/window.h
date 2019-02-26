@@ -49,6 +49,8 @@
 
 #include "robot_control_interface.h"  // RobotControlInterface
 
+namespace krang_sim_ach {
+
 class MyWindow : public dart::gui::glut::SimWindow {
  public:
   MyWindow(const dart::simulation::WorldPtr& world,
@@ -64,4 +66,5 @@ class MyWindow : public dart::gui::glut::SimWindow {
   bool* sig_received_;
 };
 
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_WINDOW_H_

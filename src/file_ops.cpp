@@ -5,6 +5,8 @@
 // Includes
 #include "file_ops.hpp"
 
+namespace krang_sim_ach {
+
 // Functions
 // // Read file as Matrix
 Eigen::MatrixXd readInputFileAsMatrix(string inputPosesFilename, int stopCount, int lineToSkip) {
@@ -93,3 +95,5 @@ string extractFilename(string filename) {
 
     return filename;
 }
+
+} // namespace krang_sim_ach
