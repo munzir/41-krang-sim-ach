@@ -105,6 +105,15 @@ dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
                                        bool* render);
 
 //==============================================================================
+//// Read init pose parameters from the config file
+void ReadInitPoseParams(const char* config_file, KrangInitPoseParams* params);
+
+//==============================================================================
+//// Read position limit parameters from the config file
+void ReadPositionLimitParams(const char* config_file,
+                             KrangPositionLimitParams* params);
+
+//==============================================================================
 //// Read parameters from the config file
 void ReadDartParams(const char* config_file, DartParams* params);
 
@@ -146,7 +155,7 @@ Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& heading_init,
 void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
                                  dart::dynamics::SkeletonPtr krang);
 
-} // namespace dart_world
+}  // namespace dart_world
 
-} // namespace krang_sim_ach
+}  // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_LOAD_OBJECTS_H_

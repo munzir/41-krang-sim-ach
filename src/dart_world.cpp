@@ -91,6 +91,142 @@ dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
 }
 
 //==============================================================================
+//// Read init pose params
+void ReadInitPoseParams(const char* config_file, KrangInitPoseParams* params) {
+  // Initialize the reader of the cfg file
+  config4cpp::Configuration* cfg = config4cpp::Configuration::create();
+  const char* scope = "";
+
+  // Temporaries we use for reading from config4cpp structure
+  const char* str;
+  std::istringstream stream;
+
+  std::cout << "Reading init pose parameters ..." << std::endl;
+  try {
+    // Parse the cfg file
+    cfg->parse(config_file);
+
+    // Initial heading
+    params->heading_init = cfg->lookupFloat(scope, "heading_init");
+    std::cout << "heading_init: " << params->heading_init << std::endl;
+
+    // Initial base pitch angle
+    params->q_base_init = cfg->lookupFloat(scope, "q_base_init");
+    std::cout << "q_base_init: " << params->q_base_init << std::endl;
+
+    // Init base xyz location in the world frame
+    str = cfg->lookupString(scope, "xyz_init");
+    stream.str(str);
+    for (int i = 0; i < 3; i++) stream >> params->xyz_init(i);
+    stream.clear();
+    std::cout << "xyz_init: " << params->xyz_init.transpose() << std::endl;
+
+    // Initial left wheel angle
+    params->q_lwheel_init = cfg->lookupFloat(scope, "q_lwheel_init");
+    std::cout << "q_lwheel_init: " << params->q_lwheel_init << std::endl;
+
+    // Initial right wheel angle
+    params->q_rwheel_init = cfg->lookupFloat(scope, "q_rwheel_init");
+    std::cout << "q_rwheel_init: " << params->q_rwheel_init << std::endl;
+
+    // Initial waist angle
+    params->q_waist_init = cfg->lookupFloat(scope, "q_waist_init");
+    std::cout << "q_waist_init: " << params->q_waist_init << std::endl;
+
+    // Initial torso angle
+    params->q_torso_init = cfg->lookupFloat(scope, "q_torso_init");
+    std::cout << "q_torso_init: " << params->q_torso_init << std::endl;
+
+    // Initial kinect angle
+    params->q_kinect_init = cfg->lookupFloat(scope, "q_kinect_init");
+    std::cout << "q_kinect_init: " << params->q_kinect_init << std::endl;
+
+    // Initial configuration of the left arm
+    str = cfg->lookupString(scope, "q_left_arm_init");
+    stream.str(str);
+    for (int i = 0; i < 7; i++) stream >> params->q_left_arm_init(i);
+    stream.clear();
+    std::cout << "q_left_arm_init: " << params->q_left_arm_init.transpose()
+              << std::endl;
+
+    // Initial configuration of the right arm
+    str = cfg->lookupString(scope, "q_right_arm_init");
+    stream.str(str);
+    for (int i = 0; i < 7; i++) stream >> params->q_right_arm_init(i);
+    stream.clear();
+    std::cout << "q_right_arm_init: " << params->q_right_arm_init.transpose()
+              << std::endl;
+
+    // To have initial pose as a balanced pose or not
+    params->init_with_balance_pose =
+        cfg->lookupBoolean(scope, "init_with_balance_pose");
+    std::cout << "init_with_balance_pose: "
+              << (params->init_with_balance_pose ? "true" : "false")
+              << std::endl;
+  } catch (const config4cpp::ConfigurationException& ex) {
+    std::cerr << ex.c_str() << std::endl;
+    cfg->destroy();
+    assert(false && "Problem reading init pose config parameters");
+  }
+  std::cout << std::endl;
+}
+
+//==============================================================================
+//// Read position limit parameters from a configuration file
+void ReadPositionLimitParams(const char* config_file,
+                             KrangPositionLimitParams* params) {
+  // Initialize the reader of the cfg file
+  config4cpp::Configuration* cfg = config4cpp::Configuration::create();
+  const char* scope = "";
+
+  // Temporaries we use for reading from config4cpp structure
+  const char* str;
+  std::istringstream stream;
+
+  std::cout << "Reading position limit configuration parameters ..."
+            << std::endl;
+  try {
+    // Parse the cfg file
+    cfg->parse(config_file);
+
+    // Position limits on rotating joints of the arm
+    params->rotating_joint_min = cfg->lookupFloat(scope, "rotating_joint_min");
+    std::cout << "rotating_joint_min: " << params->rotating_joint_min
+              << std::endl;
+    params->rotating_joint_max = cfg->lookupFloat(scope, "rotating_joint_max");
+    std::cout << "rotating_joint_max: " << params->rotating_joint_max
+              << std::endl;
+
+    // Position limits on bending joints of the arm
+    params->bending_joint_min = cfg->lookupFloat(scope, "bending_joint_min");
+    std::cout << "bending_joint_min: " << params->bending_joint_min
+              << std::endl;
+    params->bending_joint_max = cfg->lookupFloat(scope, "bending_joint_max");
+    std::cout << "bending_joint_max: " << params->bending_joint_max
+              << std::endl;
+
+    // Position limits on torso
+    params->torso_min = cfg->lookupFloat(scope, "torso_min");
+    std::cout << "torso_min: " << params->torso_min << std::endl;
+    params->torso_max = cfg->lookupFloat(scope, "torso_max");
+    std::cout << "torso_max: " << params->torso_max << std::endl;
+
+    // Position limits on waist
+    params->waist_min = cfg->lookupFloat(scope, "waist_min");
+    std::cout << "waist_min: " << params->waist_min << std::endl;
+    params->waist_max = cfg->lookupFloat(scope, "waist_max");
+    std::cout << "waist_max: " << params->waist_max << std::endl;
+  }
+
+  catch (const config4cpp::ConfigurationException& ex) {
+    std::cerr << ex.c_str() << std::endl;
+    cfg->destroy();
+    assert(false && "Problem reading position limit config parameters");
+  }
+  std::cout << std::endl;
+}
+
+//==============================================================================
 //// Read parameters from the config file
 void ReadDartParams(const char* config_file, DartParams* params) {
   // Initialize the reader of the cfg file
@@ -120,123 +256,11 @@ void ReadDartParams(const char* config_file, DartParams* params) {
            cfg->lookupString(scope, "com_params_path"));
     std::cout << "com_params_path: " << params->com_params_path << std::endl;
 
-    // Initial heading
-    params->init_pose_params.heading_init =
-        cfg->lookupFloat(scope, "heading_init");
-    std::cout << "heading_init: " << params->init_pose_params.heading_init
-              << std::endl;
-
-    // Initial base pitch angle
-    params->init_pose_params.q_base_init =
-        cfg->lookupFloat(scope, "q_base_init");
-    std::cout << "q_base_init: " << params->init_pose_params.q_base_init
-              << std::endl;
-
-    // Init base xyz location in the world frame
-    str = cfg->lookupString(scope, "xyz_init");
-    stream.str(str);
-    for (int i = 0; i < 3; i++) stream >> params->init_pose_params.xyz_init(i);
-    stream.clear();
-    std::cout << "xyz_init: " << params->init_pose_params.xyz_init.transpose()
-              << std::endl;
-
-    // Initial left wheel angle
-    params->init_pose_params.q_lwheel_init =
-        cfg->lookupFloat(scope, "q_lwheel_init");
-    std::cout << "q_lwheel_init: " << params->init_pose_params.q_lwheel_init
-              << std::endl;
-
-    // Initial right wheel angle
-    params->init_pose_params.q_rwheel_init =
-        cfg->lookupFloat(scope, "q_rwheel_init");
-    std::cout << "q_rwheel_init: " << params->init_pose_params.q_rwheel_init
-              << std::endl;
-
-    // Initial waist angle
-    params->init_pose_params.q_waist_init =
-        cfg->lookupFloat(scope, "q_waist_init");
-    std::cout << "q_waist_init: " << params->init_pose_params.q_waist_init
-              << std::endl;
-
-    // Initial torso angle
-    params->init_pose_params.q_torso_init =
-        cfg->lookupFloat(scope, "q_torso_init");
-    std::cout << "q_torso_init: " << params->init_pose_params.q_torso_init
-              << std::endl;
-
-    // Initial kinect angle
-    params->init_pose_params.q_kinect_init =
-        cfg->lookupFloat(scope, "q_kinect_init");
-    std::cout << "q_kinect_init: " << params->init_pose_params.q_kinect_init
-              << std::endl;
-
-    // Initial configuration of the left arm
-    str = cfg->lookupString(scope, "q_left_arm_init");
-    stream.str(str);
-    for (int i = 0; i < 7; i++)
-      stream >> params->init_pose_params.q_left_arm_init(i);
-    stream.clear();
-    std::cout << "q_left_arm_init: "
-              << params->init_pose_params.q_left_arm_init.transpose()
-              << std::endl;
-
-    // Initial configuration of the right arm
-    str = cfg->lookupString(scope, "q_right_arm_init");
-    stream.str(str);
-    for (int i = 0; i < 7; i++)
-      stream >> params->init_pose_params.q_right_arm_init(i);
-    stream.clear();
-    std::cout << "q_right_arm_init: "
-              << params->init_pose_params.q_right_arm_init.transpose()
-              << std::endl;
-
-    // To have initial pose as a balanced pose or not
-    params->init_pose_params.init_with_balance_pose =
-        cfg->lookupBoolean(scope, "init_with_balance_pose");
-    std::cout << "init_with_balance_pose: "
-              << (params->init_pose_params.init_with_balance_pose ? "true"
-                                                                  : "false")
-              << std::endl;
+    // Read init pose params
+    ReadInitPoseParams(config_file, &params->init_pose_params);
 
     // Position limits on rotating joints of the arm
-    params->position_limit_params.rotating_joint_min =
-        cfg->lookupFloat(scope, "rotating_joint_min");
-    std::cout << "rotating_joint_min: "
-              << params->position_limit_params.rotating_joint_min << std::endl;
-    params->position_limit_params.rotating_joint_max =
-        cfg->lookupFloat(scope, "rotating_joint_max");
-    std::cout << "rotating_joint_max: "
-              << params->position_limit_params.rotating_joint_max << std::endl;
-
-    // Position limits on bending joints of the arm
-    params->position_limit_params.bending_joint_min =
-        cfg->lookupFloat(scope, "bending_joint_min");
-    std::cout << "bending_joint_min: "
-              << params->position_limit_params.bending_joint_min << std::endl;
-    params->position_limit_params.bending_joint_max =
-        cfg->lookupFloat(scope, "bending_joint_max");
-    std::cout << "bending_joint_max: "
-              << params->position_limit_params.bending_joint_max << std::endl;
-
-    // Position limits on torso
-    params->position_limit_params.torso_min =
-        cfg->lookupFloat(scope, "torso_min");
-    std::cout << "torso_min: " << params->position_limit_params.torso_min
-              << std::endl;
-    params->position_limit_params.torso_max =
-        cfg->lookupFloat(scope, "torso_max");
-    std::cout << "torso_max: " << params->position_limit_params.torso_max
-              << std::endl;
-
-    // Position limits on waist
-    params->position_limit_params.waist_min =
-        cfg->lookupFloat(scope, "waist_min");
-    std::cout << "waist_min: " << params->position_limit_params.waist_min
-              << std::endl;
-    params->position_limit_params.waist_max =
-        cfg->lookupFloat(scope, "waist_max");
-    std::cout << "waist_max: " << params->position_limit_params.waist_max
-              << std::endl;
+    ReadPositionLimitParams(config_file, &params->position_limit_params);
 
     // Render?
     params->render = cfg->lookupBoolean(scope, "render");
@@ -431,6 +455,6 @@ void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
   }
 }
 
-} // dart_world
+}  // namespace dart_world
 
-} // namespace krang_sim_ach
+}  // namespace krang_sim_ach
