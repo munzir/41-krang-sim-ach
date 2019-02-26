@@ -48,6 +48,8 @@
 
 #include "sensor_base.h"
 
+namespace krang_sim_ach {
+
 class FloatingBaseStateSensor : public SensorBase {
  public:
   FloatingBaseStateSensor(dart::dynamics::SkeletonPtr robot) : robot_(robot) {}
@@ -76,4 +78,5 @@ class FloatingBaseStateSensor : public SensorBase {
   Vector angular_velocity_;
 };
 
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_FLOATING_BASE_STATE_SENSOR_H_

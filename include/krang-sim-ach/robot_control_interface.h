@@ -53,6 +53,8 @@
 #include "motor_group.h"    // MotorGroupBase
 #include "sensor_group.h"   // SensorGroupBase
 
+namespace krang_sim_ach {
+
 class RobotControlInterface {
  public:
   RobotControlInterface(dart::dynamics::SkeletonPtr robot,
@@ -92,6 +94,8 @@ class RobotControlInterface {
                   RobotControlInterfaceParams* params);
   InterfaceContext interface_context_;
 };
+
+} // namespace krang_sim_ach
 
 #endif  // KRANG_SIMULATION_ROBOT_CONTROL_INTERFACE_H_
 

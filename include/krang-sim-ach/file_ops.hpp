@@ -15,6 +15,8 @@ using namespace Eigen;
 // Defines
 #define MAXBUFSIZE ((int) 1e6)
 
+namespace krang_sim_ach {
+
 // Function Prototypes
 // // Read file as matrix
 Eigen::MatrixXd readInputFileAsMatrix(string inputPosesFilename, int stopCount, int lineToSkip);
@@ -25,3 +27,5 @@ Eigen::MatrixXd readInputFileAsMatrix(string inputPosesFilename);
 
 // // Extract filename
 string extractFilename(string filename);
+
+} // namespace krang_sim_ach

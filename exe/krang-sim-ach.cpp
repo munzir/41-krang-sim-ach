@@ -45,9 +45,11 @@
 
 #include <dart/dart.hpp>  // dart::simulation::WorldPtr, glutInit(), glutMainLoop()
 
-#include "dart_world.h"               // CreateWorld()
+#include "dart_world.h"               // dart_world::CreateWorld()
 #include "robot_control_interface.h"  // RobotControlInterface
 #include "window.h"                   // MyWindow
+
+using namespace krang_sim_ach;
 
 //=============================================================================
 // This function is written because glutMainLoop() does not ever return.
@@ -85,7 +87,8 @@ int main(int argc, char* argv[]) {
   // Creates world and loads all objects with desired initial configuration
   char path_to_dart_params[] =
       "/usr/local/share/krang-sim-ach/cfg/dart_params.cfg";
-  dart::simulation::WorldPtr world = CreateWorld(path_to_dart_params, &render);
+  dart::simulation::WorldPtr world =
+      dart_world::CreateWorld(path_to_dart_params, &render);
 
   // Create interface that allows other programs to interface with out robot
   char path_to_motor_params[] =

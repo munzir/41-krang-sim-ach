@@ -47,6 +47,10 @@
 #include <Eigen/Eigen>    // Eigen::
 #include <dart/dart.hpp>  // dart::simulation, dart::dynamics
 
+namespace krang_sim_ach {
+
+namespace dart_world {
+
 struct KrangInitPoseParams {
   // Initial pose parameters
   double heading_init;
@@ -141,4 +145,8 @@ Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& heading_init,
 // Set Krang Joint position limits
 void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
                                  dart::dynamics::SkeletonPtr krang);
+
+} // namespace dart_world
+
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_LOAD_OBJECTS_H_

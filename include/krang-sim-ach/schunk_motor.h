@@ -48,6 +48,8 @@
 #include <dart/dart.hpp>  // dart::dynamics::
 #include <string>         // std::string
 
+namespace krang_sim_ach {
+
 class SchunkMotor : public MotorBase {
  public:
   SchunkMotor(dart::dynamics::SkeletonPtr robot, std::string& joint_name,
@@ -87,4 +89,6 @@ class SchunkMotor : public MotorBase {
   double reference_speed_;
   double reference_current_;
 };
+
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_SCHUNK_MOTOR_H_

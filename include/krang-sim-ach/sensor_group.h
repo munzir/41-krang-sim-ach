@@ -52,6 +52,8 @@
 #include "ach_interface.h"  // InterfaceContext, SensorInterfaceBase
 #include "sensor_base.h"    // SensorBase, sensor::
 
+namespace krang_sim_ach {
+
 class SensorGroup {
  public:
   SensorGroup(dart::dynamics::SkeletonPtr robot,
@@ -79,4 +81,5 @@ class SensorGroup {
   std::mutex run_mutex_;
 };
 
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_SENSOR_GROUP_H_

@@ -62,6 +62,8 @@
 #include <string>    // std::string
 #include <vector>    // std::vector
 
+namespace krang_sim_ach {
+
 InterfaceContext::InterfaceContext(const char* interface_config_file) {
   // Read the config file
   InterfaceContextParams params;
@@ -855,3 +857,5 @@ MotorInterfaceBase* interface::Create(
     assert(false && "Can't create interface. Motor type not identified");
   }
 }
+
+} // namespace krang_sim_ach

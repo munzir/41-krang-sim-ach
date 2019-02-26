@@ -53,6 +53,8 @@
 #include <thread>         // std::thread
 #include <vector>         // std::vector
 
+namespace krang_sim_ach {
+
 class MotorGroup {
  public:
   MotorGroup(dart::dynamics::SkeletonPtr robot,
@@ -89,4 +91,6 @@ class MotorGroup {
   bool run_;
   std::mutex run_mutex_;
 };
+
+} // namespace krang_sim_ach
 #endif  // KRANG_SIMULATION_MOTOR_GROUP_H_

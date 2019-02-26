@@ -50,6 +50,8 @@
 #include <sstream>                     // istringstream
 #include <string>                      // std::string
 
+namespace krang_sim_ach {
+
 SchunkMotor::SchunkMotor(dart::dynamics::SkeletonPtr robot,
                          std::string& joint_name,
                          const char* motor_config_file) {
@@ -227,3 +229,6 @@ double SchunkMotor::GetCurrent() {
 }
 
 std::string SchunkMotor::GetMotorType() { return "schunk"; }
+
+} // namespace krang_sim_ach
+
