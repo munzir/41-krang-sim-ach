@@ -46,6 +46,7 @@
 
 #include <dart/dart.hpp>     //dart::simulation::WorldPtr
 #include <dart/gui/gui.hpp>  // dart::gui::SimWindow
+#include <fstream>
 
 #include "robot_control_interface.h"  // RobotControlInterface
 
@@ -57,13 +58,14 @@ class MyWindow : public dart::gui::glut::SimWindow {
            RobotControlInterface* robot_control_interface,
            bool* sig_received);
 
-  ~MyWindow() {}
+  ~MyWindow() { out_file_.close(); }
 
   void timeStepping() override;
 
  public:
   RobotControlInterface* robot_control_interface_;
   bool* sig_received_;
+  std::ofstream out_file_;
 };
 
 } // namespace krang_sim_ach
