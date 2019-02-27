@@ -155,6 +155,10 @@ Eigen::AngleAxisd GetKrangBaseAngleAxis(const double& heading_init,
 void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
                                  dart::dynamics::SkeletonPtr krang);
 
+//==============================================================================
+// Get Krang Com in Frame 0
+Eigen::Vector3d GetKrangCom(dart::dynamics::SkeletonPtr robot);
+
 }  // namespace dart_world
 
 }  // namespace krang_sim_ach
