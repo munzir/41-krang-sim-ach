@@ -156,8 +156,12 @@ void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
                                  dart::dynamics::SkeletonPtr krang);
 
 //==============================================================================
+// Get com of only the body excluding the wheels in world frame
+Eigen::Vector3d GetBodyCom(dart::dynamics::SkeletonPtr robot);
+
+//==============================================================================
 // Get Krang Com in Frame 0
-Eigen::Vector3d GetKrangCom(dart::dynamics::SkeletonPtr robot);
+Eigen::Matrix<double, 4, 1> GetKrangCom(dart::dynamics::SkeletonPtr robot);
 
 }  // namespace dart_world
 
