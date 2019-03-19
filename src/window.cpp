@@ -42,8 +42,8 @@
 #include "window.h"
 
 #include <dart/dart.hpp>  // dart::simulation::WorldPtr, dart::dynamics::SkeletonPtr
-#include "ach_interface.h"            // WorldInterface::SimCmd
-#include "dart_world.h"               // dart_world::SetKrangInitPose()
+#include "ach_interface.h"  // WorldInterface::SimCmd
+#include "dart_world.h"     // dart_world::SetKrangInitPose(), GetKrangCom()
 #include "robot_control_interface.h"  // RobotControlInterface
 
 namespace krang_sim_ach {
@@ -54,9 +54,17 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
     : robot_control_interface_(robot_control_interface) {
   // Attach the world passed in the input argument to the window
   setWorld(world);
-
+  dart::dynamics::SkeletonPtr robot = mWorld->getSkeleton("krang");
+  for(int i=0; i < robot->getNumBodyNodes(); i++) {
+    dart::dynamics::BodyNodePtr body = robot->getBodyNode(i);
+    std::cout << body->getName() << ": " << body->getMass() << " ";
+    std::cout << body->getLocalCOM().transpose() << std::endl;
+  }
   // Flag set when Ctrl-C is pressed
   sig_received_ = sig_received;
+
+  // For data dump
+  out_file_.open("/usr/local/share/krang-sim-ach/out");
 }
 
 void MyWindow::timeStepping() {
@@ -69,6 +77,13 @@ void MyWindow::timeStepping() {
 
     // Step the world through time
     SimWindow::timeStepping();
+
+    // Dump data
+    out_file_ << mWorld->getTime() << " ";
+    out_file_
+        << dart_world::GetKrangCom(mWorld->getSkeleton("krang")).transpose()
+        << " " << mWorld->getSkeleton("krang")->getPositions().transpose()
+        << std::endl;
 
     // Unlock all mutexes
     robot_control_interface_->MutexUnlock();
