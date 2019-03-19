@@ -455,6 +455,32 @@ void SetKrangJointPositionLimits(const KrangPositionLimitParams& params,
   }
 }
 
+//==============================================================================
+Eigen::Vector3d GetBodyCom(dart::dynamics::SkeletonPtr robot) {
+  dart::dynamics::BodyNodePtr lwheel = robot->getBodyNode("LWheel");
+  dart::dynamics::BodyNodePtr rwheel = robot->getBodyNode("RWheel");
+  double wheel_mass = lwheel->getMass();
+  double full_mass = robot->getMass();
+  return (full_mass * robot->getCOM() - wheel_mass * lwheel->getCOM() -
+          wheel_mass * rwheel->getCOM()) /
+         (full_mass - 2 * wheel_mass);
+}
+
+//==============================================================================
+Eigen::Matrix<double, 4, 1> GetKrangCom(dart::dynamics::SkeletonPtr robot) {
+  Eigen::Matrix3d base_rot =
+      robot->getBodyNode("Base")->getTransform().rotation();
+  double psi = atan2(base_rot(0, 0), -base_rot(1, 0));
+  Eigen::Matrix3d rot0;
+  rot0 << cos(psi), sin(psi), 0,  //
+      -sin(psi), cos(psi), 0,     //
+      0, 0, 1;
+  // return rot0 * (robot->getCOM() - robot->getPositions().segment(3, 3));
+  Eigen::Matrix<double, 4, 1> output;
+  output << (GetBodyCom(robot) - robot->getPositions().segment(3, 3)), psi;
+  return output;
+}
+
 }  // namespace dart_world
 
 }  // namespace krang_sim_ach
