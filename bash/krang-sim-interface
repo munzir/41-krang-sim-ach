@@ -121,18 +121,18 @@ StartAllProcess()
 		check "joystick"
 	fi
 
-	echo -e $STARTCOLOR "\nStarting krang-waist daemon" $NOCOLOR
-  # The krang-waist daemon
-  if [ -e "/var/run/somatic/krang-waist.pid" ]; then
- 	echo "krang-waist daemon already alive"
-  else
-  	start-stop-daemon --start --user root --chuid root:root \
-      --pidfile /var/run/somatic/krang-waist.pid --background --make-pidfile \
-      --exec /usr/local/bin/krang-waist -- -c waist-cmd -s waist-state -d waistd-cmd   	
-		check "krang-waist"
-  fi
-	echo -e $STARTCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ START COMPLETE ^^^^^^^^^^^^\
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" $NOCOLOR
+	#echo -e $STARTCOLOR "\nStarting krang-waist daemon" $NOCOLOR
+  ## The krang-waist daemon
+  #if [ -e "/var/run/somatic/krang-waist.pid" ]; then
+ 	#echo "krang-waist daemon already alive"
+  #else
+  #	start-stop-daemon --start --user root --chuid root:root \
+  #    --pidfile /var/run/somatic/krang-waist.pid --background --make-pidfile \
+  #    --exec /usr/local/bin/krang-waist -- -c waist-cmd -s waist-state -d waistd-cmd   	
+	#	check "krang-waist"
+  #fi
+	#echo -e $STARTCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ START COMPLETE ^^^^^^^^^^^^\
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" $NOCOLOR
 }
 
 # ************************************************************************************************
@@ -152,12 +152,12 @@ StopAllProcess()
 	# =========================================================================
 	# Clean up the waist
 
-	echo -e $STOPCOLOR "\nUsing start-stop-daemon to stop the krang-waist daemon" $NOCOLOR
-	start-stop-daemon --stop --user root --pidfile /var/run/somatic/krang-waist.pid
-	rm -rf /var/run/somatic/krang-waist.pid
+	#echo -e $STOPCOLOR "\nUsing start-stop-daemon to stop the krang-waist daemon" $NOCOLOR
+	#start-stop-daemon --stop --user root --pidfile /var/run/somatic/krang-waist.pid
+	#rm -rf /var/run/somatic/krang-waist.pid
 
-	echo -e $STOPCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ STOP COMPLETE ^^^^^^^^^^^^^^^^^^\
-^^^^^^^^^^^^^^^^^^^^^^^^^\n" $NOCOLOR
+	#echo -e $STOPCOLOR "\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ STOP COMPLETE ^^^^^^^^^^^^^^^^^^\
+#^^^^^^^^^^^^^^^^^^^^^^^^^\n" $NOCOLOR
 }
 
 
