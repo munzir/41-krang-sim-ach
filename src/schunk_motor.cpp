@@ -165,21 +165,14 @@ void SchunkMotor::Update() {
     }
     case kPositionCtrl: {
       double current_position = joint_->getPosition(0);
-      double current_speed = joint_->getVelocity(0);
       double reference_speed = 0.0;
-      double torque =
-          -position_ctrl_gains_.Kp_ * (current_position - reference_position_) -
-          position_ctrl_gains_.Kd_ * (current_speed - reference_speed);
-      joint_->setForce(0,
-                       std::min(std::max(torque, -peak_torque_), peak_torque_));
+      joint_->setCommand(0, -position_ctrl_gains_.Kp_ *
+                                    (current_position - reference_position_) +
+                                reference_speed);
       break;
     }
     case kVelocityCtrl: {
-      double current_speed = joint_->getVelocity(0);
-      double torque =
-          -speed_ctrl_gains_.Kd_ * (current_speed - reference_speed_);
-      joint_->setForce(0,
-                       std::min(std::max(torque, -peak_torque_), peak_torque_));
+      joint_->setCommand(0, reference_speed_);
       break;
     }
     case kCurrentCtrl: {
@@ -206,12 +199,12 @@ void SchunkMotor::Unlock() {
 void SchunkMotor::PositionCmd(double val) {
   mode_ = kPositionCtrl;
   reference_position_ = val;
-  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::FORCE);
+  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::SERVO);
 }
 void SchunkMotor::VelocityCmd(double val) {
   mode_ = kVelocityCtrl;
   reference_speed_ = val;
-  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::FORCE);
+  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::SERVO);
 }
 
 void SchunkMotor::CurrentCmd(double val) {
@@ -230,5 +223,5 @@ double SchunkMotor::GetCurrent() {
 
 std::string SchunkMotor::GetMotorType() { return "schunk"; }
 
-} // namespace krang_sim_ach
+}  // namespace krang_sim_ach
 
