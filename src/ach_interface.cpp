@@ -51,7 +51,7 @@
 #include <ach.h>  // ach_status_t, ach_result_to_string, ach_flush(), ach_close()
 #include <amino.h>                     // for ach.h to compile, aa_tm_add
 #include <config4cpp/Configuration.h>  // config4cpp::Configuration
-#include <somatic.pb-c.h>  // SOMATIC__: EVENT, MSG_TYPE; somatic__anything__init()
+#include <somatic.pb-c.h>  // SOMATIC__: EVENT, MSG_TYPE; somatic__anything__init(), Somatic__WaistCmd
 #include <somatic/daemon.h>  // somatic_d: _init(), _event(), _channel_open(), _check(), SOMATIC_D_GET
 #include <somatic/msg.h>  // somatic_anything_alloc(), somatic_anything_free()
 
@@ -635,7 +635,7 @@ void AmcMotorInterface::SendState() {
 }
 
 void AmcMotorInterface::Destroy() {
-  std::cout << "dedtroy " << name_ << std::endl;
+  std::cout << "destroy " << name_ << std::endl;
   ach_cancel(&cmd_chan_, NULL);
   ach_close(&cmd_chan_);
   ach_cancel(&state_chan_, NULL);
@@ -714,70 +714,50 @@ void WaistMotorInterface::ReceiveCommand(MotorBase::MotorCommandType* command,
   clock_gettime(CLOCK_MONOTONIC, &currTime);
   struct timespec abstime = aa_tm_add(wait_time_, currTime);
 
-  /// Read current state from state channel
+  // Read the command from the command channel
   int r;
-  Somatic__MotorCmd* cmd =
-      SOMATIC_D_GET(&r, somatic__motor_cmd, daemon_, &cmd_chan_, &abstime,
+  // Somatic__WaistCmd* waistd_msg = SOMATIC_WAIT_LAST_UNPACK(
+  //    r, somatic__waist_cmd,  //&protobuf_c_system_allocator,
+  //    NULL, 4096, &cmd_chan_, &abstime);
+  Somatic__WaistCmd* waistd_msg =
+      SOMATIC_D_GET(&r, somatic__waist_cmd, daemon_, &cmd_chan_, &abstime,
                     ACH_O_WAIT | ACH_O_LAST);
 
-  // Check message reception
-  somatic_d_check(
-      daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
-      SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
-      ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) || ACH_TIMEOUT == r,
-      "ReceiveCommand", "motor group: %s, ach result: %s", name_,
-      ach_result_to_string((ach_status_t)r));
+  somatic_d_check(daemon_, SOMATIC__EVENT__PRIORITIES__CRIT,
+                  SOMATIC__EVENT__CODES__COMM_FAILED_TRANSPORT,
+                  ((ACH_OK == r || ACH_MISSED_FRAME == r) && waistd_msg) ||
+                      ACH_TIMEOUT == r,
+                  "ReceiveCommand", "motor group: %s, ach result: %s", name_,
+                  ach_result_to_string((ach_status_t)r));
 
   // If the message has timed out, do nothing
   if (r == ACH_TIMEOUT) {
     *command = MotorBase::kDoNothing;
   }
-
-  // Validate the message
-  else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && cmd) {
-    // Check if the message has one of the expected parameters
-    int goodParam =
-        cmd->has_param && (SOMATIC__MOTOR_PARAM__MOTOR_CURRENT == cmd->param ||
-                           SOMATIC__MOTOR_PARAM__MOTOR_HALT == cmd->param ||
-                           SOMATIC__MOTOR_PARAM__MOTOR_RESET == cmd->param);
-
-    // Check if the command has the right number of parameters if pos, vel or
-    // current
-    int goodValues = ((cmd->values && cmd->values->n_data == 2 * n_) ||
-                      SOMATIC__MOTOR_PARAM__MOTOR_HALT == cmd->param ||
-                      SOMATIC__MOTOR_PARAM__MOTOR_RESET == cmd->param);
-
-    // Use somatic interface to combine the finalize the checks in case there is
-    // an error
-    int somGoodParam = somatic_d_check_msg(
-        daemon_, goodParam, "motor_cmd",
-        "invalid motor param, set: %d, val: %d", cmd->has_param, cmd->param);
-    int somGoodValues = somatic_d_check_msg(daemon_, goodValues, "motor_cmd",
-                                            "wrong motor count: %d, wanted %d",
-                                            cmd->values->n_data, 2 * n_);
-
-    // If both good parameter and values, execute the command; otherwise just
-    // update the state
-    if (somGoodParam && somGoodValues) {
-      switch (cmd->param) {
-        case SOMATIC__MOTOR_PARAM__MOTOR_CURRENT: {
-          *command = MotorBase::kCurrent;
-          for (int i = 0; i < n_; i++)
-            (*command_val)[i] = 2 * cmd->values->data[2 * i];
-          break;
-        }
-        case SOMATIC__MOTOR_PARAM__MOTOR_HALT: {
-          *command = MotorBase::kLock;
-          break;
-        }
-        case SOMATIC__MOTOR_PARAM__MOTOR_RESET: {
-          *command = MotorBase::kUnlock;
-          break;
-        }
-      }
-    } else {
-      *command = MotorBase::kDoNothing;
+  // Process the command
+  else if ((ACH_OK == r || ACH_MISSED_FRAME == r) && waistd_msg) {
+    switch (waistd_msg->mode) {
+      case SOMATIC__WAIST_MODE__MOVE_FWD:
+        *command = MotorBase::kVelocity;
+        for (int i = 0; i < n_; i++) (*command_val)[i] = 0.5;
+        break;
+      case SOMATIC__WAIST_MODE__MOVE_REV:
+        *command = MotorBase::kVelocity;
+        for (int i = 0; i < n_; i++) (*command_val)[i] = -0.5;
+        break;
+      case SOMATIC__WAIST_MODE__STOP:
+        *command = MotorBase::kLock;
+        break;
+      case SOMATIC__WAIST_MODE__CURRENT_MODE:
+        *command = MotorBase::kCurrent;
+        for (int i = 0; i < n_; i++)
+          (*command_val)[i] = 2 * waistd_msg->data->data[2 * i];
+        break;
+      default:
+        *command = MotorBase::kDoNothing;
     }
+  } else {
+    *command = MotorBase::kDoNothing;
   }
   aa_mem_region_release(&daemon_->memreg);
 }
@@ -858,4 +838,4 @@ MotorInterfaceBase* interface::Create(
   }
 }
 
-} // namespace krang_sim_ach
+}  // namespace krang_sim_ach

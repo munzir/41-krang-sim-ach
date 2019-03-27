@@ -151,6 +151,11 @@ void WaistMotor::ReadParams(const char* motor_param_file) {
     stream.clear();
     std::cout << "speed_ctrl_pd_gains: " << speed_ctrl_gains_.Kp_ << ", "
               << speed_ctrl_gains_.Kd_ << std::endl;
+
+    reference_speed_param_ = cfg->lookupFloat(scope, "reference_speed");
+    std::cout << "reference_speed_param: " << reference_speed_param_
+              << std::endl;
+
   } catch (const config4cpp::ConfigurationException& ex) {
     std::cerr << ex.c_str() << std::endl;
     cfg->destroy();
@@ -164,21 +169,14 @@ void WaistMotor::Update() {
     }
     case kPositionCtrl: {
       double current_position = joint_->getPosition(0);
-      double current_speed = joint_->getVelocity(0);
       double reference_speed = 0.0;
-      double torque =
-          -position_ctrl_gains_.Kp_ * (current_position - reference_position_) -
-          position_ctrl_gains_.Kd_ * (current_speed - reference_speed);
-      joint_->setForce(0,
-                       std::min(std::max(torque, -peak_torque_), peak_torque_));
+      joint_->setCommand(0, -position_ctrl_gains_.Kp_ *
+                                    (current_position - reference_position_) +
+                                reference_speed);
       break;
     }
     case kVelocityCtrl: {
-      double current_speed = joint_->getVelocity(0);
-      double torque =
-          -speed_ctrl_gains_.Kd_ * (current_speed - reference_speed_);
-      joint_->setForce(0,
-                       std::min(std::max(torque, -peak_torque_), peak_torque_));
+      joint_->setCommand(0, reference_speed_);
       break;
     }
     case kCurrentCtrl: {
@@ -189,6 +187,7 @@ void WaistMotor::Update() {
     }
   }
 }
+
 void WaistMotor::Destroy() {}
 
 void WaistMotor::Lock() {
@@ -205,12 +204,13 @@ void WaistMotor::Unlock() {
 void WaistMotor::PositionCmd(double val) {
   mode_ = kPositionCtrl;
   reference_position_ = val;
-  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::FORCE);
+  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::SERVO);
 }
 void WaistMotor::VelocityCmd(double val) {
   mode_ = kVelocityCtrl;
-  reference_speed_ = val;
-  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::FORCE);
+  reference_speed_ =
+      (val > 0.0 ? reference_speed_param_ : -reference_speed_param_);
+  joint_->setActuatorType(dart::dynamics::Joint::ActuatorType::SERVO);
 }
 
 void WaistMotor::CurrentCmd(double val) {
@@ -229,4 +229,4 @@ double WaistMotor::GetCurrent() {
 
 std::string WaistMotor::GetMotorType() { return "waist"; }
 
-} // namespace krang_sim_ach
+}  // namespace krang_sim_ach
