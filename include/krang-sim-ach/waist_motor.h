@@ -88,6 +88,7 @@ class WaistMotor : public MotorBase {
   double reference_position_;
   double reference_speed_;
   double reference_current_;
+  double reference_speed_param_;
 };
 
 } // namespace krang_sim_ach
