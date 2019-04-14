@@ -49,9 +49,10 @@
 namespace krang_sim_ach {
 
 MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
-		   RobotControlInterface* robot_control_interface,
-		   bool* sig_received)
-    : robot_control_interface_(robot_control_interface) {
+                   RobotControlInterface* robot_control_interface,
+                   bool* sig_received, bool marks_on_ground)
+    : robot_control_interface_(robot_control_interface),
+      marks_on_ground_(marks_on_ground) {
   // Attach the world passed in the input argument to the window
   setWorld(world);
 
@@ -73,8 +74,8 @@ MyWindow::MyWindow(const dart::simulation::WorldPtr& world,
   Eigen::Matrix3d trackball_rot;
   trackball_rot << 0.370763, 0.897987, -0.236967, -0.273914, 0.349534, 0.895989,
       0.887415, -0.267292, 0.375566;
-	mTrackBall.setQuaternion(Eigen::Quaterniond(trackball_rot));
-	mZoom = 0.25;
+  mTrackBall.setQuaternion(Eigen::Quaterniond(trackball_rot));
+  mZoom = 0.25;
 }
 
 void MyWindow::timeStepping() {
@@ -91,9 +92,9 @@ void MyWindow::timeStepping() {
     // Dump data
     out_file_ << mWorld->getTime() << " ";
     out_file_
-	<< dart_world::GetKrangCom(mWorld->getSkeleton("krang")).transpose()
-	<< " " << mWorld->getSkeleton("krang")->getPositions().transpose()
-	<< std::endl;
+        << dart_world::GetKrangCom(mWorld->getSkeleton("krang")).transpose()
+        << " " << mWorld->getSkeleton("krang")->getPositions().transpose()
+        << std::endl;
 
     // Unlock all mutexes
     robot_control_interface_->MutexUnlock();
@@ -112,7 +113,7 @@ void MyWindow::timeStepping() {
     // Set initial pose to the one commanded
     dart::dynamics::SkeletonPtr robot = mWorld->getSkeleton("krang");
     dart_world::SetKrangInitPose(
-	robot_control_interface_->world_interface_->pose_params_, robot);
+        robot_control_interface_->world_interface_->pose_params_, robot);
 
     // Set initial speeds to be zero
     robot->setVelocities(Eigen::VectorXd::Zero(robot->getNumDofs()));
@@ -130,6 +131,30 @@ void MyWindow::timeStepping() {
   }
 
   if (*sig_received_) exit(0);
+}
+
+void MyWindow::drawWorld() const {
+  if (mRI) {
+    if (marks_on_ground_) {
+      // Draw Scale along x-axis
+      mRI->setPenColor(Eigen::Vector3d(0.9, 0.7, 0.7));
+      mRI->pushMatrix();
+      mRI->translate(Eigen::Vector3d(2.5, 0.0, 0.0));
+      mRI->drawCube(Eigen::Vector3d(5, 0.01, 0.01));
+      mRI->popMatrix();
+
+      mRI->setPenColor(Eigen::Vector3d(0.9, 0.7, 0.7));
+      for (int i = 0; i <= 5; i++) {
+        mRI->pushMatrix();
+        mRI->translate(Eigen::Vector3d(i, 0.0, 0.0));
+        mRI->drawCube(Eigen::Vector3d(0.01, 1, 0.01));
+        mRI->popMatrix();
+      }
+    }
+  }
+
+  // Draw world
+  SimWindow::drawWorld();
 }
 
 }  // namespace krang_sim_ach

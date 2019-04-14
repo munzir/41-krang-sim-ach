@@ -56,16 +56,18 @@ class MyWindow : public dart::gui::glut::SimWindow {
  public:
   MyWindow(const dart::simulation::WorldPtr& world,
            RobotControlInterface* robot_control_interface,
-           bool* sig_received);
+           bool* sig_received, bool marks_on_ground);
 
   ~MyWindow() { out_file_.close(); }
 
   void timeStepping() override;
+  void drawWorld() const;
 
  public:
   RobotControlInterface* robot_control_interface_;
   bool* sig_received_;
   std::ofstream out_file_;
+  bool marks_on_ground_;
 };
 
 } // namespace krang_sim_ach
