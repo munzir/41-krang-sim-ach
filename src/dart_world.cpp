@@ -64,7 +64,7 @@ namespace dart_world {
 //==============================================================================
 //// Create the world with objects loaded in desired initial configuration
 dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
-                                       bool* render) {
+                                       bool* render, bool* marks_on_ground) {
   // Read the parameters
   DartParams params;
   ReadDartParams(path_to_dart_params, &params);
@@ -86,6 +86,9 @@ dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
 
   // Render?
   *render = params.render;
+
+  // Marks on ground?
+  *marks_on_ground = params.marks_on_ground;
 
   return world;
 }
@@ -265,6 +268,11 @@ void ReadDartParams(const char* config_file, DartParams* params) {
     // Render?
     params->render = cfg->lookupBoolean(scope, "render");
     std::cout << "render: " << (params->render ? "true" : "false") << std::endl;
+
+    // Marks on ground?
+    params->marks_on_ground = cfg->lookupBoolean(scope, "marks_on_ground");
+    std::cout << "marks_on_ground: "
+              << (params->marks_on_ground ? "true" : "false") << std::endl;
   }
 
   catch (const config4cpp::ConfigurationException& ex) {

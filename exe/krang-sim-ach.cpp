@@ -84,11 +84,14 @@ int main(int argc, char* argv[]) {
   // Flag for rendering or not
   bool render;
 
+  // Flag for putting marks on  ground or not
+  bool marks_on_ground;
+
   // Creates world and loads all objects with desired initial configuration
   char path_to_dart_params[] =
       "/usr/local/share/krang-sim-ach/cfg/dart_params.cfg";
   dart::simulation::WorldPtr world =
-      dart_world::CreateWorld(path_to_dart_params, &render);
+      dart_world::CreateWorld(path_to_dart_params, &render, &marks_on_ground);
 
   // Create interface that allows other programs to interface with out robot
   char path_to_motor_params[] =
@@ -102,7 +105,7 @@ int main(int argc, char* argv[]) {
   // The window object that has all the callback functions defined which are
   // executed during simulation. It therefore needs access to all other objects
   // in the program. Hence, it is being provided with them all at construction
-  MyWindow window(world, krang_ach, &sig_received);
+  MyWindow window(world, krang_ach, &sig_received, marks_on_ground);
 
   if (render) {
     // Glut init

@@ -97,12 +97,15 @@ struct DartParams {
 
   // render?
   bool render;
+
+  // marks on ground?
+  bool marks_on_ground;
 };
 
 //==============================================================================
 //// Create the world with objects loaded in desired initial configuration
 dart::simulation::WorldPtr CreateWorld(const char* path_to_dart_params,
-                                       bool* render);
+                                       bool* render, bool* marks_on_ground);
 
 //==============================================================================
 //// Read init pose parameters from the config file
